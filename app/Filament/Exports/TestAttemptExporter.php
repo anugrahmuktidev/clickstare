@@ -17,12 +17,12 @@ class TestAttemptExporter extends Exporter
 
     public function getJobQueue(): ?string
     {
-        return 'default';
+        return null;
     }
 
     public function getJobConnection(): ?string
     {
-        return config('queue.default');
+        return 'sync';
     }
 
     public static function getColumns(): array
