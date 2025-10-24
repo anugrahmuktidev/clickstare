@@ -15,6 +15,7 @@ use App\Livewire\Posts\Index as PostIndex;
 use App\Livewire\Posts\Show as PostShow;
 use App\Models\Journal;
 use App\Models\Post;
+use App\Models\HeroSlide;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 // use App\Livewire\Admin\Dashboard as AdminDashboard;
@@ -32,9 +33,16 @@ Route::get('/', function () {
         ->take(6)
         ->get();
 
+    $slides = HeroSlide::query()
+        ->where('is_active', true)
+        ->orderBy('sort_order')
+        ->orderBy('id')
+        ->get();
+
     return view('landing', [
         'posts' => $posts,
         'journals' => $journals,
+        'slides' => $slides,
     ]);
 })->name('landing');
 

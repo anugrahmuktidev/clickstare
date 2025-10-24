@@ -21,6 +21,34 @@
 
     $posts = ($posts ?? collect())->take(4);
     $journals = ($journals ?? collect())->take(6);
+
+    $slides = collect($slides ?? [])
+        ->map(function ($slide) {
+            if (is_array($slide)) {
+                return (object) [
+                    'image_path' => $slide['image_path'] ?? null,
+                    'cta_label' => $slide['cta_label'] ?? null,
+                    'cta_url' => $slide['cta_url'] ?? null,
+                ];
+            }
+
+            return (object) [
+                'image_path' => $slide->image_path ?? null,
+                'cta_label' => $slide->cta_label ?? null,
+                'cta_url' => $slide->cta_url ?? null,
+            ];
+        })
+        ->filter(fn ($slide) => filled($slide->image_path))
+        ->values();
+
+    if ($slides->isEmpty()) {
+      $slides = collect([
+        (object) ['image_path' => 'images/slide1.png'],
+        (object) ['image_path' => 'images/slide2.png'],
+        (object) ['image_path' => 'images/slide3.png'],
+        (object) ['image_path' => 'images/slide4.png'],
+      ]);
+    }
   @endphp
 
   {{-- NAV --}}
@@ -72,79 +100,33 @@
   <section class="relative overflow-hidden">
     <div id="hero-slider"
       class="relative w-full aspect-[16/9] min-h-[220px] md:min-h-[300px] lg:min-h-[360px] max-h-[520px] overflow-hidden">
-      {{-- Slide 1 --}}
-      <div class="absolute inset-0 opacity-100 transition-opacity duration-700" data-slide="0">
-        <img src="{{ asset('images/slide1.png') }}" alt="Edukasi Bahaya Rokok"
-          class="absolute inset-0 -z-10 h-full w-full object-cover" />
-        {{-- <div class="absolute inset-0 -z-0 bg-black/40"></div> --}}
-        {{-- <div
-          class="relative z-10 mx-auto max-w-6xl px-4 h-full flex items-center justify-center text-center text-white">
-          <div>
-            <h1 class="text-3xl sm:text-5xl font-extrabold leading-tight">Edukasi Bahaya Rokok</h1>
-            <p class="mt-4 text-white/90 sm:text-lg">Materi singkat, fakta akurat, dan aktivitas interaktif.</p>
-            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <a href="{{ route('register') }}"
-                class="px-6 py-3 rounded-lg bg-white text-red-700 font-semibold hover:bg-red-50">Mulai Sebagai Siswa</a>
-              <a href="{{ route('login') }}" s
-                class="px-6 py-3 rounded-lg border border-white/70 text-white hover:bg-white/10">Masuk Guru / Admin</a>
-            </div>
-          </div>
-        </div> --}}
-      </div>
+      @foreach ($slides as $slide)
+        @php
+          $imagePath = $slide->image_path;
+          $imageUrl = \Illuminate\Support\Str::startsWith($imagePath, ['http://', 'https://']) ? $imagePath : Storage::url($imagePath);
+        @endphp
 
-      {{-- Slide 2 (dummy) --}}
-      <div class="absolute inset-0 opacity-0 pointer-events-none transition-opacity duration-700" data-slide="1">
-        <img src="{{ asset('images/slide2.png') }}" alt="Pretest dan Video Edukasi"
-          class="absolute inset-0 -z-10 h-full w-full object-cover" />
-        {{-- <div class="absolute inset-0 -z-0 bg-black/40"></div> --}}
-        {{-- <div
-          class="relative z-10 mx-auto max-w-6xl px-4 h-full flex items-center justify-center text-center text-white">
-          <div>
-            <h2 class="text-3xl sm:text-5xl font-extrabold leading-tight">Pretest • Tonton • Posttest</h2>
-            <p class="mt-4 text-white/90 sm:text-lg">Ikuti alur sederhana untuk memahami dampak rokok.</p>
-            <div class="mt-6 flex items-center justify-center">
-              <a href="{{ route('register') }}"
-                class="px-6 py-3 rounded-lg bg-white text-red-700 font-semibold hover:bg-red-50">Daftar Gratis</a>
-            </div>
-          </div>
-        </div> --}}
-      </div>
+        <div
+          class="absolute inset-0 transition-opacity duration-700 {{ $loop->first ? 'opacity-100' : 'opacity-0 pointer-events-none' }}"
+          data-slide="{{ $loop->index }}">
+          <img src="{{ $imageUrl }}" alt="{{ 'Slide ' . $loop->iteration }}"
+            class="absolute inset-0 -z-10 h-full w-full object-cover" />
 
-      {{-- Slide 3 (dummy) --}}
-      <div class="absolute inset-0 opacity-0 pointer-events-none transition-opacity duration-700" data-slide="2">
-        <img src="{{ asset('images/slide3.png') }}" alt="Data dan Fakta Terkini"
-          class="absolute inset-0 -z-10 h-full w-full object-cover" />
-        {{-- <div class="absolute inset-0 -z-0 bg-black/40"></div> --}}
-        {{-- <div
-          class="relative z-10 mx-auto max-w-6xl px-4 h-full flex items-center justify-center text-center text-white">
-          <div>
-            <h2 class="text-3xl sm:text-5xl font-extrabold leading-tight">Data & Fakta Terkini</h2>
-            <p class="mt-4 text-white/90 sm:text-lg">Temukan informasi singkat yang mudah diingat.</p>
-            <div class="mt-6 flex items-center justify-center">
-              <a href="{{ route('login') }}"
-                class="px-6 py-3 rounded-lg border border-white/70 text-white hover:bg-white/10">Masuk untuk Lanjut</a>
+          @if ($slide->cta_label)
+            <div class="absolute inset-0 -z-0 bg-black/40"></div>
+            <div
+              class="relative z-10 mx-auto flex h-full max-w-6xl items-center justify-center px-4 text-center text-white">
+              <div>
+                <a href="{{ $slide->cta_url }}"
+                  class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-6 py-3 font-semibold text-white hover:bg-red-700"
+                  target="_blank" rel="noopener">
+                  {{ $slide->cta_label }}
+                </a>
+              </div>
             </div>
-          </div>
-        </div> --}}
-      </div>
-
-      {{-- Slide 4 (dummy) --}}
-      <div class="absolute inset-0 opacity-0 pointer-events-none transition-opacity duration-700" data-slide="3">
-        <img src="{{ asset('images/slide4.png') }}" alt="Komunitas dan Kisah Anti Rokok"
-          class="absolute inset-0 -z-10 h-full w-full object-cover" />
-        {{-- <div class="absolute inset-0 -z-0 bg-black/40"></div> --}}
-        {{-- <div
-          class="relative z-10 mx-auto max-w-6xl px-4 h-full flex items-center justify-center text-center text-white">
-          <div>
-            <h2 class="text-3xl sm:text-5xl font-extrabold leading-tight">Kisah Nyata</h2>
-            <p class="mt-4 text-white/90 sm:text-lg">Dampak rokok pada kesehatan dan lingkungan.</p>
-            <div class="mt-6 flex items-center justify-center">
-              <a href="{{ route('register') }}"
-                class="px-6 py-3 rounded-lg bg-white text-red-700 font-semibold hover:bg-red-50">Ikut Program</a>
-            </div>
-          </div>
-        </div> --}}
-      </div>
+          @endif
+        </div>
+      @endforeach
 
 
       {{-- Navigasi panah --}}
@@ -364,10 +346,33 @@
       const prevBtn = root.querySelector('[data-prev]');
       const nextBtn = root.querySelector('[data-next]');
 
+      if (!slides.length) {
+        prevBtn?.classList.add('hidden');
+        nextBtn?.classList.add('hidden');
+        if (dotsWrap) {
+          dotsWrap.innerHTML = '';
+          dotsWrap.classList.add('hidden');
+        }
+        return;
+      }
+
+      if (slides.length === 1) {
+        prevBtn?.classList.add('hidden');
+        nextBtn?.classList.add('hidden');
+        if (dotsWrap) {
+          dotsWrap.innerHTML = '';
+          dotsWrap.classList.add('hidden');
+        }
+        slides[0].style.opacity = '1';
+        slides[0].style.pointerEvents = 'auto';
+        return;
+      }
+
       let current = 0;
       let timer = null;
 
       function renderDots() {
+        if (!dotsWrap) return;
         dotsWrap.innerHTML = '';
         slides.forEach((_, i) => {
           const b = document.createElement('button');

@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
-use App\Models\User;
 use App\Models\QuestionThread;
+use App\Models\User;
 use App\Observers\UserObserver;
+use App\Filament\Responses\LogoutResponse as FilamentLogoutResponse;
+use Filament\Auth\Http\Responses\Contracts\LogoutResponse as FilamentLogoutResponseContract;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,7 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            FilamentLogoutResponseContract::class,
+            FilamentLogoutResponse::class,
+        );
     }
 
     /**
