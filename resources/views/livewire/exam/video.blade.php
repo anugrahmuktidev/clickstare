@@ -53,7 +53,60 @@
 
 <script>
     (() => {
+        const patchPlaybackRateProperty = () => {
+            const proto = HTMLMediaElement.prototype;
+
+            if (proto.__clicstareRatePatched) {
+                return;
+            }
+
+            const originalPlayback = Object.getOwnPropertyDescriptor(proto, 'playbackRate');
+            const originalDefault = Object.getOwnPropertyDescriptor(proto, 'defaultPlaybackRate');
+
+            if (!originalPlayback || !originalPlayback.set || !originalPlayback.get) {
+                return;
+            }
+
+            const clamp = (value) => (Number.isFinite(value) ? 1 : 1);
+
+            Object.defineProperty(proto, 'playbackRate', {
+                configurable: true,
+                enumerable: originalPlayback.enumerable,
+                get() {
+                    return 1;
+                },
+                set(value) {
+                    try {
+                        originalPlayback.set.call(this, clamp(value));
+                    } catch (error) {
+                        originalPlayback.set.call(this, 1);
+                    }
+                },
+            });
+
+            if (originalDefault?.set && originalDefault?.get) {
+                Object.defineProperty(proto, 'defaultPlaybackRate', {
+                    configurable: true,
+                    enumerable: originalDefault.enumerable,
+                    get() {
+                        return 1;
+                    },
+                    set(value) {
+                        try {
+                            originalDefault.set.call(this, clamp(value));
+                        } catch (error) {
+                            originalDefault.set.call(this, 1);
+                        }
+                    },
+                });
+            }
+
+            proto.__clicstareRatePatched = true;
+        };
+
         const initGuard = () => {
+            patchPlaybackRateProperty();
+
             const video = document.getElementById('exam-session-video');
             if (!video || video.dataset.guard === 'true') {
                 return;
@@ -109,7 +162,11 @@
 
                 if (video.playbackRate !== 1) {
                     const wasPaused = video.paused;
-                    video.playbackRate = 1;
+                    try {
+                        video.playbackRate = 1;
+                    } catch (error) {
+                        // ignore
+                    }
 
                     if (wasPaused !== video.paused) {
                         wasPaused ? video.pause() : video.play();

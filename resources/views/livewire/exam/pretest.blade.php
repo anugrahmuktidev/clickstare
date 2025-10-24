@@ -45,12 +45,6 @@
                     Benar: <span class="font-semibold">{{ $correct }}</span> /
                     {{ $total }} &mdash; Skor: <span class="font-semibold">{{ $score }}</span>
                 </p>
-
-                <div class="mt-4">
-                    <div class="h-2 w-full bg-emerald-100 rounded">
-                        <div class="h-2 bg-emerald-500 rounded" style="width: {{ $score }}%"></div>
-                    </div>
-                </div>
             </div>
 
             <div class="flex items-center justify-end gap-3">
@@ -77,10 +71,6 @@
                 <p class="text-xs text-gray-500">
                     Batas waktu setiap soal: {{ $perQuestionLabel }}. Saat waktu habis, Anda otomatis lanjut dan tidak dapat kembali.
                 </p>
-
-                <div class="h-2 w-full bg-gray-200 rounded">
-                    <div class="h-2 bg-blue-600 rounded" style="width: {{ $percent }}%"></div>
-                </div>
 
                 {{-- Indikator nomor --}}
                 <div class="flex flex-wrap gap-2 pt-1">
