@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ClicSTARe — Edukasi Bahaya Rokok</title>
+  <title>ClicSTARe — Edukasi Bahaya Rokok Elektrik</title>
   @vite('resources/css/app.css')
   <style>
     html {
