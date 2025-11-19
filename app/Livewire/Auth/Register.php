@@ -21,6 +21,8 @@ class Register extends Component
     public ?int $sekolah_id = null;
     public ?string $password = null;
     public ?string $password_confirmation = null;
+    public bool $showPassword = false;
+    public bool $showPasswordConfirmation = false;
 
     // field gabungan (NISN/NIP)
     public ?string $id_number = null;

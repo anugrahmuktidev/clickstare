@@ -3,6 +3,7 @@
 namespace App\Livewire\Education;
 
 use App\Models\Faq;
+use App\Models\TestAttempt;
 use App\Models\Video;
 use Livewire\Component;
 use Illuminate\Support\Str;
@@ -141,6 +142,24 @@ class Dashboard extends Component
             ->where('sekolah_id', $user->sekolah_id)
             ->latest()->paginate(10);
 
-        return view('livewire.education.dashboard', compact('videos', 'faqs', 'threads'));
+        $certificateAttempt = null;
+        $certificateMinCorrect = (int) config('exam.certificate_min_correct', 8);
+
+        if ($user->isSiswa()) {
+            $certificateAttempt = TestAttempt::query()
+                ->where('user_id', $user->id)
+                ->where('tipe', 'post')
+                ->where('total_benar', '>=', $certificateMinCorrect)
+                ->latest('created_at')
+                ->first();
+        }
+
+        return view('livewire.education.dashboard', [
+            'videos' => $videos,
+            'faqs' => $faqs,
+            'threads' => $threads,
+            'certificateAttempt' => $certificateAttempt,
+            'certificateMinCorrect' => $certificateMinCorrect,
+        ]);
     }
 }

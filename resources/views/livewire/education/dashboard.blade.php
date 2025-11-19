@@ -12,6 +12,28 @@
     </form>
   </div>
 
+  @if (auth()->user()->isSiswa() && $certificateAttempt)
+    <section class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 sm:p-5 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+        <div class="flex-1">
+          <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Selamat!</p>
+          <p class="text-base sm:text-lg font-semibold text-emerald-900 mt-1">
+            Anda menuntaskan posttest dengan {{ $certificateAttempt->total_benar }} jawaban benar dari
+            {{ $certificateAttempt->total_soal }} soal.
+          </p>
+          <p class="text-sm text-emerald-800 mt-1">
+            Unduh sertifikat kelulusan sebagai bukti menyelesaikan program edukasi ClicSTARe.
+          </p>
+        </div>
+        <a href="{{ route('education.certificate.download') }}" class="inline-flex items-center justify-center px-4 py-2.5
+                  rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow hover:bg-emerald-700"
+           target="_blank" rel="noopener">
+          Download Sertifikat
+        </a>
+      </div>
+    </section>
+  @endif
+
   {{-- VIDEO EDUKASI: scroll horizontal + tombol kiri/kanan --}}
   <section class="relative bg-white shadow rounded-lg p-4 sm:p-6">
     <div class="flex items-center justify-between gap-3 mb-4">

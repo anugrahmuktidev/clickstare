@@ -14,6 +14,7 @@ use App\Models\ExamParticipation; // ⬅️ penting
 class Login extends Component
 {
     public array $form = ['username' => '', 'password' => '', 'remember' => false];
+    public bool $showPassword = false;
 
     public function login(): void
     {

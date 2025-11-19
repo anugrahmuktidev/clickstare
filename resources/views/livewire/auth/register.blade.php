@@ -98,12 +98,28 @@
     {{-- Password --}}
     <label class="block">
       <span class="text-sm">Password</span>
-      <input type="password" wire:model="password" class="mt-1 w-full border rounded p-2">
+      <div class="mt-1 relative">
+        <input type="{{ $showPassword ? 'text' : 'password' }}" wire:model="password"
+          class="w-full border rounded p-2 pr-24">
+        <button type="button" wire:click="$toggle('showPassword')"
+          class="absolute inset-y-0 right-2 px-3 text-xs font-semibold text-gray-600 hover:text-gray-900"
+          aria-pressed="{{ $showPassword ? 'true' : 'false' }}">
+          {{ $showPassword ? 'Sembunyikan' : 'Tampilkan' }}
+        </button>
+      </div>
       @error('password') <div class="text-red-600 text-sm">{{ $message }}</div> @enderror
     </label>
     <label class="block">
       <span class="text-sm">Konfirmasi Password</span>
-      <input type="password" wire:model="password_confirmation" class="mt-1 w-full border rounded p-2">
+      <div class="mt-1 relative">
+        <input type="{{ $showPasswordConfirmation ? 'text' : 'password' }}"
+          wire:model="password_confirmation" class="w-full border rounded p-2 pr-24">
+        <button type="button" wire:click="$toggle('showPasswordConfirmation')"
+          class="absolute inset-y-0 right-2 px-3 text-xs font-semibold text-gray-600 hover:text-gray-900"
+          aria-pressed="{{ $showPasswordConfirmation ? 'true' : 'false' }}">
+          {{ $showPasswordConfirmation ? 'Sembunyikan' : 'Tampilkan' }}
+        </button>
+      </div>
     </label>
 
     <button class="w-full bg-emerald-600 text-white rounded p-2">Daftar</button>

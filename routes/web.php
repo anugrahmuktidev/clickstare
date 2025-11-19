@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CertificateController;
 use App\Livewire\Auth\Login;
 use App\Livewire\Exam\Video;
 use App\Livewire\Exam\Pretest;
@@ -102,6 +103,7 @@ Route::middleware(['auth', 'role:siswa', 'validated'])->group(function () {
     Route::get('/exam/pretest',  Pretest::class)->name('exam.pretest')->middleware('step:pretest');
     Route::get('/exam/video',    VideoExam::class)->name('exam.video')->middleware('step:video');
     Route::get('/exam/posttest', Posttest::class)->name('exam.posttest')->middleware('step:posttest');
+    Route::get('/education/certificate', CertificateController::class)->name('education.certificate.download');
 });
 Route::middleware(['auth', 'validated'])->group(function () {
     Route::get('/education', Dashboard::class)->name('education.index');
