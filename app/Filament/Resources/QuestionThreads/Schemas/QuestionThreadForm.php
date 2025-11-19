@@ -1,12 +1,12 @@
 <?php
-// app/Filament/Resources/QuestionThreads/Schemas/ThreadForm.php
+// app/Filament/Resources/QuestionThreads/Schemas/QuestionThreadForm.php
 namespace App\Filament\Resources\QuestionThreads\Schemas;
 
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 
-class ThreadForm
+class QuestionThreadForm
 {
     public static function configure(Schema $schema): Schema
     {
