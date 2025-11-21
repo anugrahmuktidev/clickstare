@@ -11,6 +11,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Illuminate\Support\Arr;
 
 class TestAttemptsTable
 {
@@ -99,15 +100,24 @@ class TestAttemptsTable
                     ->fileName(fn () => 'hasil-tes-' . now()->format('Ymd-His'))
                     ->authGuard('web')
                     ->columnMapping(false)
+                    ->options(function (ExportAction $action): array {
+                        $livewire = $action->getLivewire();
+                        $state = $livewire?->getTableFilterState('tipe');
+                        $value = is_array($state) ? ($state['value'] ?? null) : $state;
+
+                        return [
+                            'test_type' => $value ?: 'all',
+                        ];
+                    })
                     ->modifyQueryUsing(function ($query, array $options) {
                         if (! empty($options['sekolah_id'])) {
-                            $query->whereHas('user', function ($q) use ($options) {
-                                $q->where('sekolah_id', $options['sekolah_id']);
-                            });
+                            $query->where('sekolah_id', $options['sekolah_id']);
                         }
                         $jenis = $options['test_type'] ?? 'all';
                         if ($jenis !== 'all') {
-                            $query->where('tipe', $jenis);
+                            $query->whereHas('attempts', function ($q) use ($jenis) {
+                                $q->where('tipe', $jenis);
+                            });
                         }
                         return $query;
                     }),

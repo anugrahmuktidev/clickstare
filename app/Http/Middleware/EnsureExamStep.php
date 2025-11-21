@@ -17,7 +17,14 @@ class EnsureExamStep
             ['current_step' => 'pretest']
         );
 
-        $order = ['pretest' => 1, 'video' => 2, 'posttest' => 3, 'done' => 4];
+        $order = [
+            'pretest'   => 1,
+            'sikap'     => 2,
+            'video'     => 3,
+            'posttest'  => 4,
+            'sikap_post'=> 5,
+            'done'      => 6,
+        ];
 
         // Jika sudah selesai → arahkan ke halaman akhir
         if ($p->current_step === 'done') {

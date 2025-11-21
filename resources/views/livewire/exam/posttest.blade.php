@@ -32,43 +32,13 @@
         $perQuestionLabel = implode(' ', $perLabelParts);
     @endphp
 
-    @if ($showResult)
-        {{-- Ringkasan hasil --}}
-        <div class="space-y-4">
-            @if ($timedOut)
-                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                    Waktu posttest telah habis; sistem mengumpulkan jawaban secara otomatis.
-                </div>
-            @endif
-
-            <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
-                <h2 class="text-lg font-semibold text-emerald-800">Hasil Posttest</h2>
-                <p class="text-emerald-700 mt-1">
-                    Benar: <span class="font-semibold">{{ $correct }}</span> /
-                    {{ $total }} — Skor:
-                    <span class="font-semibold">{{ $score }}</span>
-                </p>
-
-                @if($attemptId)
-                    <p class="text-xs text-emerald-700 mt-2">ID Attempt: {{ $attemptId }}</p>
-                @endif
-            </div>
-
-            <div class="flex items-center justify-end gap-3">
-                <button wire:click="finish"
-                        class="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white">
-                    Selesai
-                </button>
-            </div>
-        </div>
-    @else
-        <div wire:poll.1000ms="tick" class="space-y-6">
-            {{-- Progres & timer --}}
-            <div class="space-y-2">
-                <div class="flex items-center justify-between text-sm text-gray-600">
+    <div wire:poll.1000ms="tick" class="space-y-6">
+        {{-- Progres & timer --}}
+        <div class="space-y-2">
+                {{-- <div class="flex items-center justify-between text-sm text-gray-600">
                     <span>Soal {{ $current + 1 }} dari {{ $total }}</span>
                     <span>{{ $percent }}% terjawab</span>
-                </div>
+                </div> --}}
 
                 <div class="flex items-center justify-between text-sm text-gray-600">
                     <span>Sisa waktu</span>
@@ -156,5 +126,5 @@
                 <p>Tidak ada soal posttest.</p>
             @endif
         </div>
-    @endif
+    </div>
 </div>

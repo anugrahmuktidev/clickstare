@@ -30,12 +30,6 @@ class Posttest extends Component
     public int $questionStartedAt = 0;
     public bool $timedOut = false;
 
-    // hasil setelah submit
-    public bool $showResult = false;
-    public int $correct = 0;
-    public int $score = 0;
-    public ?int $attemptId = null;
-
     public function mount(): void
     {
         $p = ExamParticipation::firstOrCreate(
@@ -128,10 +122,6 @@ class Posttest extends Component
 
     public function submit(bool $force = false): void
     {
-        if ($this->showResult) {
-            return;
-        }
-
         $this->resetErrorBag();
 
         if (! $force) {
@@ -146,10 +136,16 @@ class Posttest extends Component
         }
 
         if ($this->total === 0) {
-            $this->showResult = true;
-            $this->clearTimerSessions();
-            $this->secondsRemaining = 0;
-            $this->questionStartedAt = 0;
+            $attempt = TestAttempt::create([
+                'user_id'     => Auth::id(),
+                'tipe'        => 'post',
+                'total_soal'  => 0,
+                'total_benar' => 0,
+                'score'       => 0,
+            ]);
+
+            $this->finalizeAttempt($attempt);
+
             return;
         }
 
@@ -163,17 +159,15 @@ class Posttest extends Component
                 }
             }
         }
-        $this->correct = $benar;
-        $this->score   = (int) round(($benar / max(1, $this->total)) * 100);
+        $score = (int) round(($benar / max(1, $this->total)) * 100);
 
         $attempt = TestAttempt::create([
             'user_id'     => Auth::id(),
             'tipe'        => 'post',
             'total_soal'  => $this->total,
-            'total_benar' => $this->correct,
-            'score'       => $this->score,
+            'total_benar' => $benar,
+            'score'       => $score,
         ]);
-        $this->attemptId = $attempt->id;
 
         $rows = [];
         $now  = now();
@@ -195,19 +189,17 @@ class Posttest extends Component
                 'updated_at'      => $now,
             ];
         }
+
         if (! empty($rows)) {
             TestAnswer::insert($rows);
         }
 
-        $this->showResult = true;
-        $this->clearTimerSessions();
-        $this->secondsRemaining = 0;
-        $this->questionStartedAt = 0;
+        $this->finalizeAttempt($attempt);
     }
 
     public function tick(): void
     {
-        if ($this->showResult || $this->total === 0) {
+        if ($this->total === 0) {
             return;
         }
 
@@ -277,16 +269,26 @@ class Posttest extends Component
         }
     }
 
-    public function finish()
+    protected function finalizeAttempt(TestAttempt $attempt): void
     {
+        $this->clearTimerSessions();
+        $this->secondsRemaining = 0;
+        $this->questionStartedAt = 0;
+
         $p = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
 
         $p->update([
             'posttest_completed_at' => now(),
-            'current_step'          => 'done',
+            'current_step'          => 'sikap_post',
         ]);
 
-        return $this->redirectRoute('education.index', navigate: true);
+        session()->flash('posttest_attempt_id', $attempt->id);
+
+        if ($this->timedOut) {
+            session()->flash('posttest_timed_out', true);
+        }
+
+        $this->redirectRoute('exam.sikap_post', navigate: true);
     }
 
     public function render()

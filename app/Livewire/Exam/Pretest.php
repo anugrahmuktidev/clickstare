@@ -30,11 +30,6 @@ class Pretest extends Component
     public int $questionStartedAt = 0;
     public bool $timedOut = false;
 
-    // hasil setelah submit
-    public bool $showResult = false;
-    public int $correct = 0;
-    public int $score = 0;
-
     public function mount()
     {
         $p = ExamParticipation::firstOrCreate(
@@ -59,6 +54,11 @@ class Pretest extends Component
             if (! array_key_exists($q->id, $this->jawaban)) {
                 $this->jawaban[$q->id] = null; // default null = belum jawab
             }
+        }
+
+        if ($this->total === 0) {
+            $this->completeWithoutQuestions();
+            return;
         }
 
         $this->startTimerForCurrentQuestion();
@@ -125,34 +125,22 @@ class Pretest extends Component
 
     public function submit(bool $force = false)
     {
-        if ($this->showResult) {
-            return;
-        }
-
         $this->resetErrorBag();
 
         if (! $force) {
-            // Pastikan semua terjawab
             foreach ($this->questions as $q) {
                 if ($this->jawaban[$q->id] === null) {
                     $this->addError("jawaban.$q->id", 'Masih ada soal yang belum dijawab.');
                 }
             }
-            if ($this->getErrorBag()->isNotEmpty()) return;
+            if ($this->getErrorBag()->isNotEmpty()) {
+                return;
+            }
         }
 
-        if ($this->total === 0) {
-            $this->showResult = true;
-            $this->clearTimerSessions();
-            $this->secondsRemaining = 0;
-            $this->questionStartedAt = 0;
-            return;
-        }
-
-        // Hitung benar & skor
         $benar = 0;
         foreach ($this->questions as $q) {
-            $chosen = $this->jawaban[$q->id];
+            $chosen = $this->jawaban[$q->id] ?? null;
             if ($chosen !== null) {
                 $opt = $q->options->firstWhere('id', (int) $chosen);
                 if ($opt && $opt->benar) {
@@ -160,26 +148,23 @@ class Pretest extends Component
                 }
             }
         }
-        $this->correct = $benar;
-        $this->score   = (int) round(($benar / max(1, $this->total)) * 100);
+        $score = (int) round(($benar / max(1, $this->total)) * 100);
 
-        // 1) buat attempt
         $attempt = TestAttempt::create([
             'user_id'     => Auth::id(),
             'tipe'        => 'pre',
             'total_soal'  => $this->total,
-            'total_benar' => $this->correct,
-            'score'       => $this->score,
+            'total_benar' => $benar,
+            'score'       => $score,
         ]);
 
-        // 2) buat detail answer (bulk insert)
         $rows = [];
         $now  = now();
         foreach ($this->questions as $q) {
-            $chosenId = $this->jawaban[$q->id];
+            $chosenId = $this->jawaban[$q->id] ?? null;
 
             if ($chosenId === null) {
-                continue; // kosong → dianggap salah, tidak disimpan
+                continue;
             }
 
             $chosenId  = (int) $chosenId;
@@ -194,19 +179,52 @@ class Pretest extends Component
                 'updated_at'      => $now,
             ];
         }
+
         if (! empty($rows)) {
             TestAnswer::insert($rows);
         }
 
-        $this->showResult = true;
+        $this->finalizeAttempt($attempt);
+    }
+
+    protected function finalizeAttempt(TestAttempt $attempt): void
+    {
         $this->clearTimerSessions();
         $this->secondsRemaining = 0;
         $this->questionStartedAt = 0;
+
+        $p = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
+
+        $p->update([
+            'pretest_completed_at' => now(),
+            'current_step'         => 'sikap',
+        ]);
+
+        session()->flash('pretest_attempt_id', $attempt->id);
+
+        if ($this->timedOut) {
+            session()->flash('pretest_timed_out', true);
+        }
+
+        $this->redirectRoute('exam.sikap', navigate: true);
+    }
+
+    protected function completeWithoutQuestions(): void
+    {
+        $attempt = TestAttempt::create([
+            'user_id'     => Auth::id(),
+            'tipe'        => 'pre',
+            'total_soal'  => 0,
+            'total_benar' => 0,
+            'score'       => 0,
+        ]);
+
+        $this->finalizeAttempt($attempt);
     }
 
     public function tick(): void
     {
-        if ($this->showResult || $this->total === 0) {
+        if ($this->total === 0) {
             return;
         }
 
@@ -274,18 +292,6 @@ class Pretest extends Component
         for ($i = 0; $i < $this->total; $i++) {
             session()->forget($this->timerSessionKey($i));
         }
-    }
-
-    public function proceedToVideo()
-    {
-        $p = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
-
-        $p->update([
-            'pretest_completed_at' => now(),
-            'current_step'         => 'video',
-        ]);
-
-        return $this->redirectRoute('exam.video', navigate: true);
     }
 
     public function render()

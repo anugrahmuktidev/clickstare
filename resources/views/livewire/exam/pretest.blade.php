@@ -30,125 +30,99 @@
         $perQuestionLabel = implode(' ', $perLabelParts);
     @endphp
 
-    {{-- Jika sudah submit, tampilkan hasil --}}
-    @if ($showResult)
-        <div class="space-y-4">
-            @if ($timedOut)
-                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                    Waktu pretest telah habis sehingga jawaban dikumpulkan otomatis.
-                </div>
-            @endif
+    <div wire:poll.1000ms="tick" class="space-y-6">
+        {{-- Progres & timer --}}
+        <div class="space-y-2">
+            {{-- <div class="flex items-center justify-between text-sm text-gray-600">
+                <span>Soal {{ $current + 1 }} dari {{ $total }}</span>
+                <span>{{ $percent }}% terjawab</span>
+            </div> --}}
 
-            <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
-                <h2 class="text-lg font-semibold text-emerald-800">Hasil Pretest</h2>
-                <p class="text-emerald-700 mt-1">
-                    Benar: <span class="font-semibold">{{ $correct }}</span> /
-                    {{ $total }} &mdash; Skor: <span class="font-semibold">{{ $score }}</span>
-                </p>
+            <div class="flex items-center justify-between text-sm text-gray-600">
+                <span>Sisa waktu</span>
+                <span class="font-semibold text-red-600">{{ $formattedTime }}</span>
             </div>
 
-            <div class="flex items-center justify-end gap-3">
-                <button wire:click="proceedToVideo"
-                        class="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white">
-                    Lanjut ke Video
-                </button>
+            <p class="text-xs text-gray-500">
+                Batas waktu setiap soal: {{ $perQuestionLabel }}. Saat waktu habis, Anda otomatis lanjut dan tidak dapat kembali.
+            </p>
+
+            {{-- Indikator nomor --}}
+            <div class="flex flex-wrap gap-2 pt-1">
+                @for ($i = 0; $i < $total; $i++)
+                    @php
+                        $qid        = $questions[$i]->id ?? null;
+                        $isCurrent  = $i === $current;
+                        $isAnswered = !is_null($jawaban[$qid] ?? null);
+                        $isLocked   = $i < $current;
+                    @endphp
+                    <button type="button"
+                            wire:click="goTo({{ $i }})"
+                            @disabled($isLocked)
+                            class="h-8 w-8 rounded-full text-xs font-semibold transition
+                                   {{ $isCurrent ? 'bg-blue-600 text-white'
+                                    : ($isLocked ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                 : ($isAnswered ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200')) }}">
+                        {{ $i + 1 }}
+                    </button>
+                @endfor
             </div>
         </div>
-    @else
-        <div wire:poll.1000ms="tick" class="space-y-6">
-            {{-- Progres & timer --}}
-            <div class="space-y-2">
-                <div class="flex items-center justify-between text-sm text-gray-600">
-                    <span>Soal {{ $current + 1 }} dari {{ $total }}</span>
-                    <span>{{ $percent }}% terjawab</span>
-                </div>
 
-                <div class="flex items-center justify-between text-sm text-gray-600">
-                    <span>Sisa waktu</span>
-                    <span class="font-semibold text-red-600">{{ $formattedTime }}</span>
-                </div>
-
-                <p class="text-xs text-gray-500">
-                    Batas waktu setiap soal: {{ $perQuestionLabel }}. Saat waktu habis, Anda otomatis lanjut dan tidak dapat kembali.
-                </p>
-
-                {{-- Indikator nomor --}}
-                <div class="flex flex-wrap gap-2 pt-1">
-                    @for ($i = 0; $i < $total; $i++)
-                        @php
-                            $qid        = $questions[$i]->id ?? null;
-                            $isCurrent  = $i === $current;
-                            $isAnswered = !is_null($jawaban[$qid] ?? null);
-                            $isLocked   = $i < $current;
-                        @endphp
-                        <button type="button"
-                                wire:click="goTo({{ $i }})"
-                                @disabled($isLocked)
-                                class="h-8 w-8 rounded-full text-xs font-semibold transition
-                                       {{ $isCurrent ? 'bg-blue-600 text-white'
-                                        : ($isLocked ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                     : ($isAnswered ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200')) }}">
-                            {{ $i + 1 }}
-                        </button>
-                    @endfor
-                </div>
-            </div>
-
-            {{-- Satu soal per layar --}}
-            @if ($q)
-                <form wire:submit.prevent="submit" class="space-y-6">
-                    <div wire:key="question-{{ $q->id }}" class="space-y-3">
-                        <div class="font-semibold">
-                            {{ $current + 1 }}. {{ $q->teks }}
-                        </div>
-
-                        <div class="space-y-2">
-                            @foreach ($q->options as $opt)
-                                <label wire:key="opt-{{ $q->id }}-{{ $opt->id }}" class="flex items-center gap-3">
-                                    <input
-                                        type="radio"
-                                        name="q{{ $q->id }}"        {{-- ← grup radio unik per soal --}}
-                                        class="h-4 w-4"
-                                        wire:model="jawaban.{{ $q->id }}"
-                                        value="{{ $opt->id }}"
-                                    >
-                                    <span>{{ $opt->teks }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-
-                        @error('jawaban.' . $q->id)
-                            <p class="text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+        {{-- Satu soal per layar --}}
+        @if ($q)
+            <form wire:submit.prevent="submit" class="space-y-6">
+                <div wire:key="question-{{ $q->id }}" class="space-y-3">
+                    <div class="font-semibold">
+                        {{ $current + 1 }}. {{ $q->teks }}
                     </div>
-                    {{-- Navigasi --}}
-                    <div class="flex items-center justify-between pt-4">
-                        <button type="button"
-                                disabled
-                                class="px-4 py-2 rounded border bg-gray-100 text-gray-400 cursor-not-allowed">
-                            Tidak Bisa Kembali
-                        </button>
 
-                        <div class="flex gap-3">
-                            @if ($current < $total - 1)
-                                <button type="button"
-                                        wire:click="next"
-                                        class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">
-                                    Berikutnya
-                                </button>
-                            @else
-                                <button type="submit"
-                                        class="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white">
-                                    Kumpulkan Pretest
-                                </button>
-                            @endif
-                        </div>
+                    <div class="space-y-2">
+                        @foreach ($q->options as $opt)
+                            <label wire:key="opt-{{ $q->id }}-{{ $opt->id }}" class="flex items-center gap-3">
+                                <input
+                                    type="radio"
+                                    name="q{{ $q->id }}"        {{-- ← grup radio unik per soal --}}
+                                    class="h-4 w-4"
+                                    wire:model="jawaban.{{ $q->id }}"
+                                    value="{{ $opt->id }}"
+                                >
+                                <span>{{ $opt->teks }}</span>
+                            </label>
+                        @endforeach
                     </div>
-                </form>
-            @else
-                <p>Tidak ada soal pretest.</p>
-            @endif
-        </div>
-    @endif
+
+                    @error('jawaban.' . $q->id)
+                        <p class="text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                {{-- Navigasi --}}
+                <div class="flex items-center justify-between pt-4">
+                    <button type="button"
+                            disabled
+                            class="px-4 py-2 rounded border bg-gray-100 text-gray-400 cursor-not-allowed">
+                        Tidak Bisa Kembali
+                    </button>
+
+                    <div class="flex gap-3">
+                        @if ($current < $total - 1)
+                            <button type="button"
+                                    wire:click="next"
+                                    class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white">
+                                Berikutnya
+                            </button>
+                        @else
+                            <button type="submit"
+                                    class="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white">
+                                Kumpulkan Pretest
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </form>
+        @else
+            <p>Tidak ada soal pretest.</p>
+        @endif
+    </div>
 </div>

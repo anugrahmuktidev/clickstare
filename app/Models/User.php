@@ -74,6 +74,11 @@ class User extends Authenticatable
         return $this->hasMany(QuestionUser::class);
     }
 
+    public function attitudeAnswers()
+    {
+        return $this->hasMany(AttitudeAnswer::class);
+    }
+
     /* ===========================
      | Helper Role
      |===========================*/
