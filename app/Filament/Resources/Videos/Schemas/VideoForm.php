@@ -25,7 +25,7 @@ class VideoForm
             FileUpload::make('path')
                 ->label('File Video')
                 ->disk('public')                 // storage/app/public
-                ->directory('test-upload')            // isi 'path' jadi 'videos/xxx.mp4'
+                ->directory('videos')            // isi 'path' jadi 'videos/xxx.mp4'
                 ->visibility('public')
                 ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
                 ->maxSize(512000)                // 500 MB (satuan KB!)
