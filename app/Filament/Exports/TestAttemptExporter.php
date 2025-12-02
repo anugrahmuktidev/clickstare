@@ -64,6 +64,24 @@ class TestAttemptExporter extends Exporter
             ExportColumn::make('sekolah')
                 ->label('Sekolah')
                 ->state(fn(User $record) => $record->sekolah->nama ?? ''),
+            ExportColumn::make('nomor_hp')
+                ->label('Nomor HP')
+                ->state(fn(User $record) => (string) ($record->nisn ?? '')),
+            ExportColumn::make('jenis_kelamin')
+                ->label('Jenis Kelamin')
+                ->state(fn(User $record) => (string) ($record->jenis_kelamin ?? '')),
+            ExportColumn::make('umur')
+                ->label('Umur')
+                ->state(fn(User $record) => (string) ($record->umur ?? '')),
+            ExportColumn::make('kelas')
+                ->label('Kelas')
+                ->state(fn(User $record) => (string) ($record->kelas ?? '')),
+            ExportColumn::make('pekerjaan_orangtua')
+                ->label('Pekerjaan Orang Tua')
+                ->state(fn(User $record) => (string) ($record->pekerjaan_orangtua ?? '')),
+            ExportColumn::make('alamat')
+                ->label('Alamat')
+                ->state(fn(User $record) => (string) ($record->alamat ?? '')),
         ];
 
         foreach (['pre', 'post'] as $stage) {
