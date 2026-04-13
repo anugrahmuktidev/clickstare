@@ -5,7 +5,10 @@ namespace App\Providers\Filament;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Pages\Dashboard;
+use App\Filament\Pages\Auth\ChangePassword;
+use Filament\Navigation\MenuItem;
 use Filament\View\PanelsRenderHook;
+use Filament\Support\Icons\Heroicon;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -31,6 +34,15 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('SAARe')
+            ->profile(ChangePassword::class, isSimple: false)
+            ->userMenuItems([
+                'profile' => MenuItem::make()->visible(false),
+                'change-password' => MenuItem::make()
+                    ->label('Ubah Password')
+                    ->icon(Heroicon::OutlinedKey)
+                    ->url(fn (): string => filament()->getProfileUrl() ?? filament()->getUrl())
+                    ->sort(PHP_INT_MAX - 1),
+            ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('5s')
             ->renderHook(
