@@ -29,7 +29,7 @@ class InitialSeeder extends Seeder
             [
                 'nip' => '123321',
                 'role' => 'admin',
-                'name' => 'Admin Clicstare',
+                'name' => 'Admin SAARe',
                 'password' => Hash::make('qwe123qwe'), // ganti di produksi
                 'sekolah_id' => $sma1->id,
             ]

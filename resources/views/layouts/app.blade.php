@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <title>{{ $title ?? 'ClicSTARe' }}</title>
+  <title>{{ $title ?? 'SAARe' }}</title>
   @vite('resources/css/app.css')
   @vite('resources/js/app.js')
   @livewireStyles
@@ -10,7 +10,7 @@
 <body class="bg-gray-50">
 <header class="border-b bg-white">
   <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-    <div class="font-semibold">ClicSTARe</div>
+    <div class="font-semibold">SAARe</div>
     <nav class="flex items-center gap-4 text-sm">
       @if(auth()->check() && auth()->user()->role === 'admin')
         <a href="{{ route('dashboard') }}" class="underline">Admin</a>

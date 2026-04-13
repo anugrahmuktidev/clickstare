@@ -214,7 +214,7 @@
                 <div class="content">
                     <p class="label">Diberikan kepada</p>
                     <p class="name">{{ $upperName }}</p>
-                    <p class="description">Telah menyelesaikan program edukasi bahaya rokok elektronik ClicSTARe.</p>
+                    <p class="description">Telah menyelesaikan program edukasi bahaya rokok elektronik SAARe.</p>
                     <p class="description">
                         Mencapai {{ $attempt->total_benar }} jawaban benar dari {{ $attempt->total_soal }} soal posttest (nilai
                         {{ $scoreText }}).
@@ -235,7 +235,7 @@
                         </div>
                         <div class="line"></div>
                         <div class="role">Koordinator Program</div>
-                        <div class="name">ClicSTARe</div>
+                        <div class="name">SAARe</div>
                     </div>
                 </div>
             </div>

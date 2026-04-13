@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ $title ?? 'ClicSTARe — Guest' }}</title>
+  <title>{{ $title ?? 'SAARe — Guest' }}</title>
   @vite('resources/css/app.css')
   @vite('resources/js/app.js')
   @livewireStyles
@@ -62,7 +62,7 @@
         </div>
         <div>
           <p class="text-sm font-semibold text-red-600 tracking-wide">Bahaya Merokok Elektrik</p>
-          <h1 class="text-lg font-bold text-gray-900">ClicSTARe</h1>
+          <h1 class="text-lg font-bold text-gray-900">SAARe</h1>
         </div>
       </div>
     </div>

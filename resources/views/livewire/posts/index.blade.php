@@ -6,7 +6,7 @@
   <header class="space-y-3 text-center">
     <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-red-700">Artikel</span>
     <h1 class="text-3xl font-bold text-gray-900">Rangkaian Postingan Edukatif</h1>
-    <p class="text-sm text-gray-600 max-w-3xl mx-auto">Kumpulan artikel singkat seputar bahaya rokok, gaya hidup sehat, dan tips praktis untuk mendampingi program ClicSTARe.</p>
+    <p class="text-sm text-gray-600 max-w-3xl mx-auto">Kumpulan artikel singkat seputar bahaya rokok, gaya hidup sehat, dan tips praktis untuk mendampingi program SAARe.</p>
   </header>
 
   <section class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -15,7 +15,7 @@
         @if ($post->gambar_path)
           <img src="{{ Storage::url($post->gambar_path) }}" alt="{{ $post->judul }}" class="aspect-[16/9] w-full object-cover" loading="lazy">
         @else
-          <div class="aspect-[16/9] w-full bg-gradient-to-br from-red-200 via-amber-100 to-white flex items-center justify-center text-sm font-semibold text-red-600">ClicSTARe</div>
+          <div class="aspect-[16/9] w-full bg-gradient-to-br from-red-200 via-amber-100 to-white flex items-center justify-center text-sm font-semibold text-red-600">SAARe</div>
         @endif
         <div class="flex flex-1 flex-col p-5 space-y-3">
           <p class="text-xs text-gray-500 uppercase tracking-wide">{{ $post->updated_at?->translatedFormat('d F Y') }}</p>

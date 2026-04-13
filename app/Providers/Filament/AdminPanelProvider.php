@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Pages\Dashboard;
+use Filament\View\PanelsRenderHook;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -29,9 +30,67 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->brandName('ClicSTARe')
+            ->brandName('SAARe')
             ->databaseNotifications()
             ->databaseNotificationsPolling('5s')
+            ->renderHook(
+                PanelsRenderHook::STYLES_AFTER,
+                fn (): string => <<<'HTML'
+                    <style>
+                        .fi-no {
+                            z-index: 70 !important;
+                        }
+
+                        .fi-no-notification,
+                        .fi-no-notification .fi-no-notification-close-btn {
+                            pointer-events: auto !important;
+                        }
+                    </style>
+                HTML,
+            )
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => <<<'HTML'
+                    <script data-navigate-once>
+                        if (! window.__filamentNotificationCloseFixInstalled) {
+                            window.__filamentNotificationCloseFixInstalled = true;
+
+                            document.addEventListener('click', (event) => {
+                                const closeButton = event.target.closest('.fi-no-notification-close-btn');
+
+                                if (! closeButton) {
+                                    return;
+                                }
+
+                                const notificationElement = closeButton.closest('.fi-no-notification');
+
+                                if (! notificationElement) {
+                                    return;
+                                }
+
+                                const alpineData = notificationElement._x_dataStack?.[0];
+
+                                if (typeof alpineData?.close === 'function') {
+                                    alpineData.close();
+
+                                    return;
+                                }
+
+                                const wireKey = notificationElement.getAttribute('wire:key') ?? '';
+                                const notificationId = wireKey.split('.notifications.').pop();
+
+                                if (notificationId) {
+                                    window.dispatchEvent(
+                                        new CustomEvent('close-notification', {
+                                            detail: { id: notificationId },
+                                        }),
+                                    );
+                                }
+                            });
+                        }
+                    </script>
+                HTML,
+            )
             // ->login()
             ->colors([
                 'primary' => Color::Amber,

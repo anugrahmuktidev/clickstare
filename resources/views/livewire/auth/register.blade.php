@@ -1,5 +1,5 @@
 <div class="w-full max-w-md space-y-5 bg-white p-6 rounded shadow">
-  <h1 class="text-xl font-semibold">Registrasi Clicstare</h1>
+  <h1 class="text-xl font-semibold">Registrasi SAARe</h1>
 
   {{-- Pilih Role --}}
   <div class="space-y-2">

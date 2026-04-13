@@ -22,7 +22,7 @@
             {{ $certificateAttempt->total_soal }} soal.
           </p>
           <p class="text-sm text-emerald-800 mt-1">
-            Unduh sertifikat kelulusan sebagai bukti menyelesaikan program edukasi ClicSTARe.
+            Unduh sertifikat kelulusan sebagai bukti menyelesaikan program edukasi SAARe.
           </p>
         </div>
         <a href="{{ route('education.certificate.download') }}" class="inline-flex items-center justify-center px-4 py-2.5

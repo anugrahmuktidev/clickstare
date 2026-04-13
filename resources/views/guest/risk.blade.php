@@ -85,7 +85,7 @@
         <div class="space-y-4 text-center sm:text-left">
           <h2 class="text-2xl font-semibold text-blue-900">Butuh Motivasi Tambahan?</h2>
           <p class="text-sm text-blue-800 sm:text-base">
-            ClicSTARe menyediakan materi edukasi dan jurnal untuk membantu perjalanan berhenti merokok.
+            SAARe menyediakan materi edukasi dan jurnal untuk membantu perjalanan berhenti merokok.
             Mulailah menjelajah dan catat perkembangan Anda secara berkala.
           </p>
         </div>

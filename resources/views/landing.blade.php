@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ClicSTARe — Edukasi Bahaya Rokok Elektrik</title>
+  <title>SAARe — Edukasi Bahaya Rokok Elektrik</title>
   @vite('resources/css/app.css')
   <style>
     html {
@@ -55,7 +55,7 @@
   <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
     <div class="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
       {{-- Logo --}}
-      <a href="{{ url('/') }}" class="font-bold text-xl text-red-600">ClicSTARe</a>
+      <a href="{{ url('/') }}" class="font-bold text-xl text-red-600">SAARe</a>
       <div class="flex items-center gap-2">
         @guest
           <a href="{{ route('login') }}"
@@ -327,7 +327,7 @@
   <footer class="border-t">
     <div
       class="mx-auto max-w-6xl px-4 py-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-3">
-      <p class="text-sm text-gray-600">© {{ date('Y') }} ClicSTARe — Kampanye Anti Rokok</p>
+      <p class="text-sm text-gray-600">© {{ date('Y') }} SAARe — Kampanye Anti Rokok</p>
       @auth
         <div class="text-sm text-gray-600">
           <a href="{{ $dashboard ?? '#' }}" class="hover:text-red-700">Dashboard</a>

@@ -5,7 +5,7 @@
 <div class="mx-auto max-w-6xl px-4 py-12 space-y-10">
   <header class="space-y-3 text-center">
     <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">Jurnal</span>
-    <h1 class="text-3xl font-bold text-gray-900">Koleksi Jurnal ClicSTARe</h1>
+    <h1 class="text-3xl font-bold text-gray-900">Koleksi Jurnal SAARe</h1>
     <p class="text-sm text-gray-600 max-w-3xl mx-auto">Telusuri jurnal pendukung yang dapat diunduh bebas untuk memperkaya materi kampanye anti rokok.</p>
   </header>
 
