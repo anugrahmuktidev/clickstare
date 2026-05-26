@@ -4,7 +4,6 @@ namespace App\Livewire\Auth;
 
 use App\Models\Sekolah;
 use App\Models\User;
-use App\Models\ExamParticipation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
@@ -107,15 +106,7 @@ class Register extends Component
         }
 
         if ($user->role === 'siswa') {
-
-            // siapkan progres exam (agar middleware step bekerja)
-            ExamParticipation::firstOrCreate(
-                ['user_id' => $user->id],
-                ['current_step' => 'pretest']
-            );
-
-            // arahkan ke pretest
-            $this->redirect(route('exam.pretest'), navigate: true);
+            $this->redirect(route('education.index'), navigate: true);
             return;
         }
 

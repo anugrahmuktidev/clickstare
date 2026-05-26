@@ -12,6 +12,17 @@ class EnsureExamStep
     {
         $user = $request->user();
 
+        $pretestSteps = ['pretest', 'sikap', 'pengetahuan_test'];
+        $posttestSteps = ['posttest', 'sikap_post', 'pengetahuan_test_post'];
+
+        if (in_array($requiredStep, $pretestSteps, true) && ! (bool) ($user?->sekolah?->is_pretest_enabled ?? false)) {
+            abort(403, 'Pretest untuk sekolah Anda sedang ditutup oleh admin.');
+        }
+
+        if (in_array($requiredStep, $posttestSteps, true) && ! (bool) ($user?->sekolah?->is_posttest_enabled ?? false)) {
+            abort(403, 'Posttest untuk sekolah Anda sedang ditutup oleh admin.');
+        }
+
         $p = ExamParticipation::firstOrCreate(
             ['user_id' => $user->id],
             ['current_step' => 'pretest']
@@ -20,10 +31,12 @@ class EnsureExamStep
         $order = [
             'pretest'   => 1,
             'sikap'     => 2,
-            'video'     => 3,
-            'posttest'  => 4,
-            'sikap_post'=> 5,
-            'done'      => 6,
+            'pengetahuan_test' => 3,
+            'video'     => 4,
+            'posttest'  => 5,
+            'sikap_post'=> 6,
+            'pengetahuan_test_post' => 7,
+            'done'      => 8,
         ];
 
         // Jika sudah selesai → arahkan ke halaman akhir

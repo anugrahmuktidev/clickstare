@@ -282,10 +282,12 @@ class Posttest extends Component
             'current_step'          => 'sikap_post',
         ]);
 
-        session()->flash('posttest_attempt_id', $attempt->id);
+        session(['posttest_attempt_id' => $attempt->id]);
 
         if ($this->timedOut) {
-            session()->flash('posttest_timed_out', true);
+            session(['posttest_timed_out' => true]);
+        } else {
+            session()->forget('posttest_timed_out');
         }
 
         $this->redirectRoute('exam.sikap_post', navigate: true);

@@ -8,8 +8,6 @@ use Livewire\Component;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Filament\Facades\Filament;
-use App\Models\ExamParticipation; // ⬅️ penting
-
 #[Layout('layouts.guest')]
 class Login extends Component
 {
@@ -74,12 +72,7 @@ class Login extends Component
         }
 
         if ($user->isSiswa()) {
-            $p = \App\Models\ExamParticipation::firstOrCreate(
-                ['user_id' => $user->id],
-                ['current_step' => 'pretest']
-            );
-            $step = $p->current_step === 'done' ? 'pretest' : $p->current_step;
-            $this->redirect(route("exam.$step"), navigate: true);
+            $this->redirect(route('education.index'), navigate: true);
             return;
         }
 

@@ -34,6 +34,188 @@
     </section>
   @endif
 
+  @if (auth()->user()->isSiswa())
+    @php
+      $preScore = $pretestAttempt ? (int) $pretestAttempt->score : null;
+      $postScore = $posttestAttempt ? (int) $posttestAttempt->score : null;
+      $scoreDelta = ($preScore !== null && $postScore !== null) ? ($postScore - $preScore) : null;
+      $preBarWidth = $preScore !== null ? max(0, min(100, $preScore)) : 0;
+      $postBarWidth = $postScore !== null ? max(0, min(100, $postScore)) : 0;
+      $preScoreDisplay = $preScore ?? 0;
+      $postScoreDisplay = $postScore ?? 0;
+    @endphp
+
+    <style>
+      @media (max-width: 639px) {
+        .desktop-test-result { display: none; }
+      }
+      @media (min-width: 640px) {
+        .mobile-test-result { display: none; }
+      }
+    </style>
+
+    <section class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="pointer-events-none absolute -top-14 -right-12 h-40 w-40 rounded-full bg-blue-100/70 blur-2xl"></div>
+      <div class="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-orange-100/60 blur-2xl"></div>
+
+      <div class="relative p-3 sm:p-6">
+        <div class="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+          <h2 class="text-sm sm:text-lg font-bold text-slate-900">Hasil Tes Anda</h2>
+        </div>
+
+        <div class="mobile-test-result space-y-2.5">
+          <div class="grid grid-cols-2 gap-2">
+            <article class="rounded-lg border border-blue-200 bg-blue-50/70 px-3 py-2.5">
+              <p class="text-[10px] font-semibold uppercase tracking-wide text-blue-700">Pretest</p>
+              <p class="text-xl leading-tight font-bold text-blue-900 mt-1">{{ $preScoreDisplay }}</p>
+              <div class="mt-1.5 flex items-center gap-1.5">
+                <div class="h-2 w-full rounded-full border border-blue-200 bg-blue-100 overflow-hidden" style="background-color:#dbeafe;">
+                  <div class="h-full rounded-full bg-blue-600" style="width: {{ $preBarWidth }}%; min-width: {{ $preBarWidth > 0 ? '10px' : '0' }}; background-color:#2563eb;"></div>
+                </div>
+                <span class="text-[10px] font-semibold text-blue-700">{{ $preBarWidth }}%</span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5">
+                {{ $pretestAttempt ? $pretestAttempt->total_benar . '/' . $pretestAttempt->total_soal . ' benar' : 'Belum tes' }}
+              </p>
+            </article>
+
+            <article class="rounded-lg border border-orange-200 bg-orange-50/70 px-3 py-2.5">
+              <p class="text-[10px] font-semibold uppercase tracking-wide text-orange-700">Posttest</p>
+              <p class="text-xl leading-tight font-bold text-orange-900 mt-1">{{ $postScoreDisplay }}</p>
+              <div class="mt-1.5 flex items-center gap-1.5">
+                <div class="h-2 w-full rounded-full border border-orange-200 bg-orange-100 overflow-hidden" style="background-color:#ffedd5;">
+                  <div class="h-full rounded-full bg-orange-500" style="width: {{ $postBarWidth }}%; min-width: {{ $postBarWidth > 0 ? '10px' : '0' }}; background-color:#f97316;"></div>
+                </div>
+                <span class="text-[10px] font-semibold text-orange-700">{{ $postBarWidth }}%</span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5">
+                {{ $posttestAttempt ? $posttestAttempt->total_benar . '/' . $posttestAttempt->total_soal . ' benar' : 'Belum tes' }}
+              </p>
+            </article>
+          </div>
+
+          @if ($scoreDelta !== null)
+            <div class="mt-2 rounded-md border px-2.5 py-1.5 text-[11px]
+              {{ $scoreDelta >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700' }}">
+              Perubahan skor: <span class="font-bold">{{ $scoreDelta > 0 ? '+' : '' }}{{ $scoreDelta }}</span>
+            </div>
+          @endif
+
+        </div>
+
+        <div class="desktop-test-result">
+          <div class="grid gap-4 md:grid-cols-2">
+            <article class="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-blue-50/40 to-white p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Pretest</p>
+
+              <div class="mt-2 flex items-end gap-2">
+                <p class="text-3xl font-bold text-blue-900">{{ $preScoreDisplay }}</p>
+                <p class="text-sm text-blue-700 pb-1">/ 100</p>
+              </div>
+
+              <div class="mt-3 h-2 rounded-full bg-blue-100 overflow-hidden" style="background-color:#dbeafe;">
+                <div
+                  class="h-full rounded-full bg-blue-600"
+                  style="width: {{ $preBarWidth }}%; min-width: {{ $preBarWidth > 0 ? '10px' : '0' }}; background-color:#2563eb;"></div>
+              </div>
+
+              @if ($pretestAttempt)
+                <div class="mt-3 space-y-1 text-sm text-slate-700">
+                  <p>Benar: <span class="font-semibold">{{ $pretestAttempt->total_benar }}</span> / {{ $pretestAttempt->total_soal }}</p>
+                  <p>Dikerjakan: {{ $pretestAttempt->created_at->format('d M Y, H:i') }}</p>
+                </div>
+              @else
+                <p class="mt-3 text-sm text-slate-600">Belum mengerjakan pretest.</p>
+              @endif
+            </article>
+
+            <article class="rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 via-orange-50/40 to-white p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-orange-700">Posttest</p>
+
+              <div class="mt-2 flex items-end gap-2">
+                <p class="text-3xl font-bold text-orange-900">{{ $postScoreDisplay }}</p>
+                <p class="text-sm text-orange-700 pb-1">/ 100</p>
+              </div>
+
+              <div class="mt-3 h-2 rounded-full bg-orange-100 overflow-hidden" style="background-color:#ffedd5;">
+                <div
+                  class="h-full rounded-full bg-orange-500"
+                  style="width: {{ $postBarWidth }}%; min-width: {{ $postBarWidth > 0 ? '10px' : '0' }}; background-color:#f97316;"></div>
+              </div>
+
+              @if ($posttestAttempt)
+                <div class="mt-3 space-y-1 text-sm text-slate-700">
+                  <p>Benar: <span class="font-semibold">{{ $posttestAttempt->total_benar }}</span> / {{ $posttestAttempt->total_soal }}</p>
+                  <p>Dikerjakan: {{ $posttestAttempt->created_at->format('d M Y, H:i') }}</p>
+                </div>
+              @else
+                <p class="mt-3 text-sm text-slate-600">Belum mengerjakan posttest.</p>
+              @endif
+            </article>
+          </div>
+
+          @if ($scoreDelta !== null)
+            <div class="mt-4 rounded-lg border px-4 py-2.5 text-sm
+              {{ $scoreDelta >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700' }}">
+              Perubahan skor dari pretest ke posttest:
+              <span class="font-bold">{{ $scoreDelta > 0 ? '+' : '' }}{{ $scoreDelta }}</span> poin.
+            </div>
+          @endif
+        </div>
+      </div>
+    </section>
+  @endif
+
+  @if (auth()->user()->isSiswa())
+    <section class="bg-white shadow rounded-lg p-4 sm:p-6">
+      <h2 class="font-bold text-base sm:text-lg mb-3">Akses Tes</h2>
+
+      @if ($showPretestButton || $showPosttestButton)
+        <div class="flex flex-wrap gap-3">
+          @if ($showPretestButton)
+            <a href="{{ route('exam.pretest') }}"
+              onclick="@if ($pretestAttempt) alert('Anda sudah mengerjakan pretest. Lihat hasilnya pada bagian Hasil Tes Anda.'); return false; @else return confirm('Mulai pretest sekarang? Anda akan melanjutkan ke pertanyaan sikap dan pertanyaan pengetahuan setelah pretest selesai.'); @endif"
+              style="background-color:#2563eb;color:#ffffff;border:1px solid #1d4ed8;"
+              class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 6v12l10-6-10-6z" />
+              </svg>
+              <span>Mulai Pretest</span>
+            </a>
+          @endif
+
+          @if ($showPosttestButton)
+            <a href="{{ route('exam.posttest') }}"
+              onclick="@if ($posttestAttempt) alert('Anda sudah mengerjakan posttest. Lihat hasilnya pada bagian Hasil Tes Anda.'); return false; @else return confirm('Mulai posttest sekarang? Anda akan melanjutkan ke pertanyaan sikap akhir dan pertanyaan pengetahuan akhir setelah posttest selesai.'); @endif"
+              style="background-color:#f97316;color:#ffffff;border:1px solid #ea580c;"
+              class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-orange-500 text-white text-sm font-semibold shadow-sm hover:bg-orange-600 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 6v12l10-6-10-6z" />
+              </svg>
+              <span>Mulai Posttest</span>
+            </a>
+          @endif
+        </div>
+
+        @if (! $showPretestButton || ! $showPosttestButton)
+          <p class="text-xs text-gray-500 mt-3">
+            @if (! $showPretestButton && ! $showPosttestButton)
+              Pretest dan posttest belum dibuka oleh admin sekolah.
+            @elseif (! $showPretestButton)
+              Pretest belum dibuka oleh admin sekolah.
+            @else
+              Posttest belum dibuka oleh admin sekolah.
+            @endif
+          </p>
+        @endif
+      @else
+        <p class="text-sm text-gray-600">
+          Pretest dan posttest untuk sekolah Anda saat ini belum dibuka oleh admin.
+        </p>
+      @endif
+    </section>
+  @endif
+
   {{-- VIDEO EDUKASI: scroll horizontal + tombol kiri/kanan --}}
   <section class="relative bg-white shadow rounded-lg p-4 sm:p-6">
     <div class="flex items-center justify-between gap-3 mb-4">
@@ -50,6 +232,18 @@
       </div>
     </div>
 
+    @if (session('error'))
+      <div class="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        {{ session('error') }}
+      </div>
+    @endif
+
+    @if (auth()->user()->isSiswa() && ! $canWatchEducationVideo)
+      <div class="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        Selesaikan pretest terlebih dahulu untuk membuka video edukasi.
+      </div>
+    @endif
+
     {{-- gradient fade kiri/kanan --}}
     <div class="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent rounded-l-lg"></div>
     <div class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent rounded-r-lg"></div>
@@ -58,27 +252,53 @@
          class="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 sm:pb-2 -mx-1 sm:mx-0 px-1 sm:px-0"
          style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
       @forelse ($videos as $v)
-        <a href="{{ route('education.watch', $v->id) }}"
-           class="snap-start bg-gray-50 rounded-lg border hover:bg-gray-100 transition p-2
-                  min-w-[72%] max-w-[72%]
-                  sm:min-w-[260px] sm:max-w-[260px]
-                  lg:min-w-[300px] lg:max-w-[300px]">
-          <div class="aspect-video w-full rounded-md bg-gray-200 overflow-hidden mb-2">
-            @if ($v->thumbnail_url)
-              <img src="{{ $v->thumbnail_url }}" alt="{{ $v->judul }}" class="w-full h-full object-cover">
-            @else
-              <div class="w-full h-full grid place-items-center text-gray-500 text-sm sm:text-base px-3 text-center">
-                {{ \Illuminate\Support\Str::limit($v->judul, 60) }}
+        @if ($canWatchEducationVideo)
+          <a href="{{ route('education.watch', $v->id) }}"
+             class="snap-start bg-gray-50 rounded-lg border hover:bg-gray-100 transition p-2
+                    min-w-[72%] max-w-[72%]
+                    sm:min-w-[260px] sm:max-w-[260px]
+                    lg:min-w-[300px] lg:max-w-[300px]">
+            <div class="aspect-video w-full rounded-md bg-gray-200 overflow-hidden mb-2">
+              @if ($v->thumbnail_url)
+                <img src="{{ $v->thumbnail_url }}" alt="{{ $v->judul }}" class="w-full h-full object-cover">
+              @else
+                <div class="w-full h-full grid place-items-center text-gray-500 text-sm sm:text-base px-3 text-center">
+                  {{ \Illuminate\Support\Str::limit($v->judul, 60) }}
+                </div>
+              @endif
+            </div>
+            <div class="px-1">
+              <h3 class="font-semibold text-sm sm:text-[15px] leading-snug line-clamp-2 break-words">{{ $v->judul }}</h3>
+              @if ($v->deskripsi)
+                <p class="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2 break-words">{{ $v->deskripsi }}</p>
+              @endif
+            </div>
+          </a>
+        @else
+          <button type="button"
+            onclick="alert('Selesaikan pretest terlebih dahulu untuk membuka video edukasi.')"
+            class="snap-start bg-gray-100 rounded-lg border p-2 text-left opacity-80
+                   min-w-[72%] max-w-[72%]
+                   sm:min-w-[260px] sm:max-w-[260px]
+                   lg:min-w-[300px] lg:max-w-[300px]">
+            <div class="aspect-video w-full rounded-md bg-gray-200 overflow-hidden mb-2 relative">
+              @if ($v->thumbnail_url)
+                <img src="{{ $v->thumbnail_url }}" alt="{{ $v->judul }}" class="w-full h-full object-cover">
+              @else
+                <div class="w-full h-full grid place-items-center text-gray-500 text-sm sm:text-base px-3 text-center">
+                  {{ \Illuminate\Support\Str::limit($v->judul, 60) }}
+                </div>
+              @endif
+              <div class="absolute inset-0 bg-black/35 grid place-items-center text-white text-xs font-semibold">
+                Terkunci
               </div>
-            @endif
-          </div>
-          <div class="px-1">
-            <h3 class="font-semibold text-sm sm:text-[15px] leading-snug line-clamp-2 break-words">{{ $v->judul }}</h3>
-            @if ($v->deskripsi)
-              <p class="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2 break-words">{{ $v->deskripsi }}</p>
-            @endif
-          </div>
-        </a>
+            </div>
+            <div class="px-1">
+              <h3 class="font-semibold text-sm sm:text-[15px] leading-snug line-clamp-2 break-words text-gray-700">{{ $v->judul }}</h3>
+              <p class="text-xs sm:text-sm text-gray-500 mt-1">Selesaikan pretest untuk menonton video ini.</p>
+            </div>
+          </button>
+        @endif
       @empty
         <p class="text-gray-500 px-1">Belum ada video edukasi.</p>
       @endforelse

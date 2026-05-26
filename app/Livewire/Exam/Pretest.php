@@ -200,10 +200,12 @@ class Pretest extends Component
             'current_step'         => 'sikap',
         ]);
 
-        session()->flash('pretest_attempt_id', $attempt->id);
+        session(['pretest_attempt_id' => $attempt->id]);
 
         if ($this->timedOut) {
-            session()->flash('pretest_timed_out', true);
+            session(['pretest_timed_out' => true]);
+        } else {
+            session()->forget('pretest_timed_out');
         }
 
         $this->redirectRoute('exam.sikap', navigate: true);

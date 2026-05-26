@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Videos\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Textarea;
 
 class VideoForm
@@ -32,13 +31,6 @@ class VideoForm
                 ->preserveFilenames()
                 ->openable()
                 ->downloadable(),
-
-            Toggle::make('is_active')
-                ->label('Aktifkan sebagai video sesi setelah pretest')
-                ->inline(false)
-                ->helperText('Hanya satu video yang bisa aktif pada satu waktu. Menandai opsi ini akan menonaktifkan video lain.')
-                ->default(false),
-
         ]);
     }
 }

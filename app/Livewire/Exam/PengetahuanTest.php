@@ -2,19 +2,20 @@
 
 namespace App\Livewire\Exam;
 
-use App\Models\AttitudeAnswer;
-use App\Models\AttitudeQuestion;
 use App\Models\ExamParticipation;
+use App\Models\KnowledgeAnswer;
+use App\Models\KnowledgeQuestion;
+use App\Models\TestAttempt;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.guest')]
-class Sikap extends Component
+class PengetahuanTest extends Component
 {
     /**
-     * @var \Illuminate\Support\Collection<int,\App\Models\AttitudeQuestion>
+     * @var \Illuminate\Support\Collection<int,\App\Models\KnowledgeQuestion>
      */
     public $questions;
 
@@ -25,6 +26,8 @@ class Sikap extends Component
 
     public bool $finished = false;
     public string $phase = 'pre'; // pre atau post
+    public ?array $testResult = null;
+    public bool $timedOut = false;
 
     public array $choiceLabels = [
         'STS' => 'Sangat Tidak Setuju (STS)',
@@ -36,20 +39,20 @@ class Sikap extends Component
     public function mount(): void
     {
         $routeName = request()->route()?->getName();
-        $this->phase = $routeName === 'exam.sikap_post' ? 'post' : 'pre';
+        $this->phase = $routeName === 'exam.pengetahuan_test_post' ? 'post' : 'pre';
 
         $p = ExamParticipation::firstOrCreate(
             ['user_id' => Auth::id()],
             ['current_step' => 'pretest']
         );
 
-        $requiredStep = $this->phase === 'post' ? 'sikap_post' : 'sikap';
+        $requiredStep = $this->phase === 'post' ? 'pengetahuan_test_post' : 'pengetahuan_test';
         if ($p->current_step !== $requiredStep) {
             $this->redirectRoute("exam.{$p->current_step}", navigate: true);
             return;
         }
 
-        $this->questions = AttitudeQuestion::query()
+        $this->questions = KnowledgeQuestion::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -66,12 +69,12 @@ class Sikap extends Component
         $questionIds = $this->questions->pluck('id');
 
         if ($questionIds->isNotEmpty()) {
-            $existing = AttitudeAnswer::query()
+            $existing = KnowledgeAnswer::query()
                 ->where('user_id', $userId)
                 ->where('stage', $this->phase)
-                ->whereIn('attitude_question_id', $questionIds)
+                ->whereIn('knowledge_question_id', $questionIds)
                 ->get()
-                ->keyBy('attitude_question_id');
+                ->keyBy('knowledge_question_id');
 
             if ($existing->isNotEmpty()) {
                 foreach ($existing as $questionId => $answer) {
@@ -86,6 +89,14 @@ class Sikap extends Component
             $this->finished = true;
         }
 
+        $attemptKey = $this->phase === 'post' ? 'posttest_attempt_id' : 'pretest_attempt_id';
+        $timedOutKey = $this->phase === 'post' ? 'posttest_timed_out' : 'pretest_timed_out';
+        $attemptId = session()->pull($attemptKey);
+        $this->testResult = $this->loadTestResult(
+            $this->phase === 'post' ? 'post' : 'pre',
+            $attemptId ? (int) $attemptId : null
+        );
+        $this->timedOut = (bool) session()->pull($timedOutKey, false);
     }
 
     public function updated(string $name): void
@@ -123,23 +134,23 @@ class Sikap extends Component
         $rows = [];
         foreach ($this->questions as $question) {
             $rows[] = [
-                'attitude_question_id' => $question->id,
-                'user_id'              => $userId,
-                'stage'                => $this->phase,
-                'value'                => $this->answers[$question->id],
-                'created_at'           => $now,
-                'updated_at'           => $now,
+                'knowledge_question_id' => $question->id,
+                'user_id'               => $userId,
+                'stage'                 => $this->phase,
+                'value'                 => $this->answers[$question->id],
+                'created_at'            => $now,
+                'updated_at'            => $now,
             ];
         }
 
         DB::transaction(function () use ($rows, $userId, $questionIds) {
-            AttitudeAnswer::query()
+            KnowledgeAnswer::query()
                 ->where('user_id', $userId)
                 ->where('stage', $this->phase)
-                ->whereIn('attitude_question_id', $questionIds)
+                ->whereIn('knowledge_question_id', $questionIds)
                 ->delete();
 
-            AttitudeAnswer::insert($rows);
+            KnowledgeAnswer::insert($rows);
         });
 
         $this->finished = true;
@@ -148,7 +159,7 @@ class Sikap extends Component
     public function proceed(): void
     {
         if (! $this->finished) {
-            $this->addError('answers', 'Selesaikan pertanyaan sikap terlebih dahulu.');
+            $this->addError('answers', 'Selesaikan pertanyaan pengetahuan terlebih dahulu.');
             return;
         }
 
@@ -156,27 +167,54 @@ class Sikap extends Component
 
         if ($this->phase === 'post') {
             $p->update([
-                'sikap_post_completed_at' => now(),
-                'current_step'            => 'pengetahuan_test_post',
+                'knowledge_test_post_completed_at' => now(),
+                'current_step'                     => 'done',
             ]);
 
-            session()->flash('success', 'Pertanyaan sikap akhir selesai. Lanjut pertanyaan pengetahuan akhir.');
-            $this->redirectRoute('exam.pengetahuan_test_post', navigate: true);
+            session()->flash('success', 'Pertanyaan pengetahuan akhir selesai.');
+            $this->redirectRoute('education.index', navigate: true);
             return;
         }
 
         $p->update([
-            'sikap_completed_at' => now(),
-            'current_step'       => 'pengetahuan_test',
+            'knowledge_test_completed_at' => now(),
+            'current_step'                => 'posttest',
         ]);
 
-        session()->flash('success', 'Pertanyaan sikap selesai. Lanjut pertanyaan pengetahuan.');
+        session()->flash('success', 'Pretest selesai.');
 
-        $this->redirectRoute('exam.pengetahuan_test', navigate: true);
+        $this->redirectRoute('education.index', navigate: true);
+    }
+
+    protected function loadTestResult(string $tipe, ?int $attemptId = null): ?array
+    {
+        $query = TestAttempt::query()
+            ->where('user_id', Auth::id())
+            ->where('tipe', $tipe);
+
+        if ($attemptId) {
+            $query->where('id', $attemptId);
+        }
+
+        $attempt = $query->latest()->first();
+
+        if (! $attempt) {
+            return null;
+        }
+
+        $totalSoal = $attempt->total_soal ?? $attempt->answers()->count();
+        $totalBenar = $attempt->total_benar ?? $attempt->answers()->where('is_correct', true)->count();
+        $score = $attempt->score ?? (int) round(($totalBenar / max(1, $totalSoal)) * 100);
+
+        return [
+            'total_soal'  => (int) $totalSoal,
+            'total_benar' => (int) $totalBenar,
+            'score'       => (int) $score,
+        ];
     }
 
     public function render()
     {
-        return view('livewire.exam.sikap');
+        return view('livewire.exam.pengetahuan-test');
     }
 }

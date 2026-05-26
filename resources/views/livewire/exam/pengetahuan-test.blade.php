@@ -1,17 +1,41 @@
 <div class="w-full max-w-3xl mx-auto bg-white rounded-lg shadow p-6 space-y-6">
     @php
         $isPostPhase = $phase === 'post';
-        $actionLabel = $isPostPhase ? 'Lanjut Pertanyaan Pengetahuan Akhir' : 'Lanjut Pertanyaan Pengetahuan';
+        $resultTitle = $isPostPhase ? 'Hasil Posttest' : 'Hasil Pretest';
+        $testName = $isPostPhase ? 'posttest' : 'pretest';
+        $savedLabel = $isPostPhase
+            ? 'Jawaban pertanyaan pengetahuan akhir Anda sudah tersimpan.'
+            : 'Jawaban pertanyaan pengetahuan Anda sudah tersimpan.';
+        $actionLabel = $isPostPhase ? 'Selesai' : 'Selesai Pretest';
     @endphp
 
-    <div>
-        <h1 class="text-xl font-semibold text-slate-900">Pertanyaan Sikap</h1>
-    </div>
+    @if (! ($finished && ! $isPostPhase))
+        <div>
+            <h1 class="text-xl font-semibold text-slate-900">Pertanyaan Pengetahuan</h1>
+        </div>
+    @endif
 
     @if ($finished)
         <div class="space-y-5">
+            @if ($timedOut)
+                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    Waktu {{ $testName }} telah habis sehingga jawaban dikumpulkan otomatis.
+                </div>
+            @endif
+
+            @if ($testResult)
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
+                    <h2 class="text-lg font-semibold text-emerald-800">{{ $resultTitle }}</h2>
+                    <p class="text-emerald-700 mt-1">
+                        Benar: <span class="font-semibold">{{ $testResult['total_benar'] }}</span>
+                        / {{ $testResult['total_soal'] }}
+                        &mdash; Skor: <span class="font-semibold">{{ $testResult['score'] }}</span>
+                    </p>
+                </div>
+            @endif
+
             <div class="rounded-lg border border-slate-200 bg-slate-50 p-5">
-                <p class="text-sm text-slate-700">Jawaban pertanyaan sikap Anda sudah tersimpan.</p>
+                <p class="text-sm text-slate-700">{{ $savedLabel }}</p>
             </div>
 
             <div class="flex items-center justify-end">
@@ -24,7 +48,7 @@
     @else
         <form wire:submit.prevent="submit" class="space-y-5">
             <p class="text-sm text-slate-600">
-                Jawab setiap pernyataan berikut sesuai dengan kondisi Anda saat ini.
+                Jawab setiap pertanyaan berikut sesuai dengan kondisi Anda saat ini.
             </p>
 
             @forelse ($questions as $index => $question)
@@ -37,7 +61,7 @@
                         @foreach ($choiceLabels as $code => $label)
                             <label class="flex items-center gap-3 text-sm text-slate-700">
                                 <input type="radio"
-                                       name="sikap-{{ $question->id }}"
+                                       name="pengetahuan-{{ $question->id }}"
                                        class="h-4 w-4"
                                        wire:model="answers.{{ $question->id }}"
                                        value="{{ $code }}">
@@ -51,7 +75,7 @@
                     @enderror
                 </div>
             @empty
-                <p class="text-sm text-slate-600">Tidak ada pertanyaan sikap yang tersedia.</p>
+                <p class="text-sm text-slate-600">Tidak ada pertanyaan pengetahuan yang tersedia.</p>
             @endforelse
 
             <div class="flex items-center justify-end">

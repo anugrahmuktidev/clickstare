@@ -3,6 +3,7 @@
 namespace App\Livewire\Guru;
 
 use Livewire\Component;
+use App\Models\Sekolah;
 use App\Models\User;
 use App\Models\Video;
 use App\Models\TestAttempt;
@@ -12,15 +13,20 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
+use Livewire\WithPagination;
 
 
 #[Layout('layouts.guest')]
 
 class Dashboard extends Component
 {
+    use WithPagination;
+
     public int $sekolahId;
     public array $reply = []; // reply[thread_id] => teks
     public array $asSolution = []; // asSolution[thread_id] => bool
+    public bool $isPretestEnabled = false;
+    public bool $isPosttestEnabled = false;
 
     // ringkasan
     public int $totalSiswa = 0;
@@ -34,6 +40,8 @@ class Dashboard extends Component
     {
         $u = Auth::user();
         $this->sekolahId = (int) $u->sekolah_id;
+        $this->isPretestEnabled = (bool) ($u->sekolah?->is_pretest_enabled ?? false);
+        $this->isPosttestEnabled = (bool) ($u->sekolah?->is_posttest_enabled ?? false);
 
         // ringkasan cepat
         $this->totalSiswa = User::where('role', 'siswa')
@@ -60,6 +68,44 @@ class Dashboard extends Component
                   ->orWhere('status', '!=', 'closed');
             })
             ->count();
+    }
+
+    public function togglePretestAccess(): void
+    {
+        $sekolah = Sekolah::query()->findOrFail($this->sekolahId);
+        $enabled = ! (bool) $sekolah->is_pretest_enabled;
+
+        $sekolah->update([
+            'is_pretest_enabled' => $enabled,
+        ]);
+
+        $this->isPretestEnabled = $enabled;
+
+        session()->flash(
+            'exam_ok',
+            $enabled
+                ? 'Akses pretest berhasil diaktifkan untuk sekolah Anda.'
+                : 'Akses pretest berhasil dinonaktifkan untuk sekolah Anda.'
+        );
+    }
+
+    public function togglePosttestAccess(): void
+    {
+        $sekolah = Sekolah::query()->findOrFail($this->sekolahId);
+        $enabled = ! (bool) $sekolah->is_posttest_enabled;
+
+        $sekolah->update([
+            'is_posttest_enabled' => $enabled,
+        ]);
+
+        $this->isPosttestEnabled = $enabled;
+
+        session()->flash(
+            'exam_ok',
+            $enabled
+                ? 'Akses posttest berhasil diaktifkan untuk sekolah Anda.'
+                : 'Akses posttest berhasil dinonaktifkan untuk sekolah Anda.'
+        );
     }
 
     public function answer(int $threadId): void
@@ -157,14 +203,13 @@ class Dashboard extends Component
             })
             ->count();
 
-        // daftar siswa valid + progress (ambil 10 terbaru)
+        // daftar siswa valid + progress (10 data per halaman)
         $students = User::where('role', 'siswa')
             ->where('sekolah_id', $this->sekolahId)
             ->where('is_validated', true)
             ->orderBy('name')
             ->with(['attempts' => fn($q) => $q->latest()->limit(2)]) // cepat
-            ->take(10)
-            ->get();
+            ->paginate(10, ['*'], 'studentsPage');
 
         // thread sekolah (5 terbaru) + replies
         $threads = QuestionThread::with([

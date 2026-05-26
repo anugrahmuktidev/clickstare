@@ -144,8 +144,30 @@ class Dashboard extends Component
 
         $certificateAttempt = null;
         $certificateMinCorrect = (int) config('exam.certificate_min_correct', 8);
+        $showPretestButton = false;
+        $showPosttestButton = false;
+        $pretestAttempt = null;
+        $posttestAttempt = null;
+        $canWatchEducationVideo = true;
 
         if ($user->isSiswa()) {
+            $showPretestButton = (bool) ($user->sekolah?->is_pretest_enabled ?? false);
+            $showPosttestButton = (bool) ($user->sekolah?->is_posttest_enabled ?? false);
+
+            $pretestAttempt = TestAttempt::query()
+                ->where('user_id', $user->id)
+                ->where('tipe', 'pre')
+                ->latest('created_at')
+                ->first();
+
+            $posttestAttempt = TestAttempt::query()
+                ->where('user_id', $user->id)
+                ->where('tipe', 'post')
+                ->latest('created_at')
+                ->first();
+
+            $canWatchEducationVideo = $pretestAttempt !== null;
+
             $certificateAttempt = TestAttempt::query()
                 ->where('user_id', $user->id)
                 ->where('tipe', 'post')
@@ -160,6 +182,11 @@ class Dashboard extends Component
             'threads' => $threads,
             'certificateAttempt' => $certificateAttempt,
             'certificateMinCorrect' => $certificateMinCorrect,
+            'showPretestButton' => $showPretestButton,
+            'showPosttestButton' => $showPosttestButton,
+            'pretestAttempt' => $pretestAttempt,
+            'posttestAttempt' => $posttestAttempt,
+            'canWatchEducationVideo' => $canWatchEducationVideo,
         ]);
     }
 }
