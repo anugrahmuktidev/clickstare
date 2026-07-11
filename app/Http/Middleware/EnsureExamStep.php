@@ -29,14 +29,14 @@ class EnsureExamStep
         );
 
         $order = [
-            'pretest'   => 1,
-            'sikap'     => 2,
-            'pengetahuan_test' => 3,
-            'video'     => 4,
-            'posttest'  => 5,
-            'sikap_post'=> 6,
-            'pengetahuan_test_post' => 7,
-            'done'      => 8,
+            'pretest'               => 1,
+            'pengetahuan_test'      => 2,
+            'sikap'                 => 3,
+            'video'                 => 4,
+            'posttest'              => 5,
+            'pengetahuan_test_post' => 6,
+            'sikap_post'            => 7,
+            'done'                  => 8,
         ];
 
         // Jika sudah selesai → arahkan ke halaman akhir

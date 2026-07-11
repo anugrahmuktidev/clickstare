@@ -2,12 +2,11 @@
 
 namespace App\Filament\Exports;
 
-use App\Models\Question;
 use App\Models\Sekolah;
 use App\Models\AttitudeQuestion;
 use App\Models\KnowledgeQuestion;
-use App\Models\TestAttempt;
 use App\Models\User;
+use App\Support\KnowledgeTestSummary;
 use Filament\Forms\Components\Select;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
@@ -31,33 +30,6 @@ class TestAttemptExporter extends Exporter
 
     public static function getColumns(): array
     {
-        $maxNomor = (int) (Question::max('nomor') ?? 0);
-        if ($maxNomor < 1) {
-            $maxNomor = 10;
-        }
-
-        $perSoal = function (string $stage, int $nomor) {
-            return function (User $record) use ($stage, $nomor) {
-                $attempt = static::resolveAttempt($record, $stage);
-                if (! $attempt) {
-                    return '';
-                }
-
-                $answers = $attempt->relationLoaded('answers')
-                    ? $attempt->answers
-                    : $attempt->answers()->with('question:id,nomor')->get();
-
-                foreach ($answers as $answer) {
-                    $n = (int) ($answer->question->nomor ?? 0);
-                    if ($n === $nomor) {
-                        return $answer->is_correct ? 'B' : 'S';
-                    }
-                }
-
-                return '';
-            };
-        };
-
         $columns = [
             ExportColumn::make('name')
                 ->label('Nama')
@@ -83,48 +55,34 @@ class TestAttemptExporter extends Exporter
             ExportColumn::make('alamat')
                 ->label('Alamat')
                 ->state(fn(User $record) => (string) ($record->alamat ?? '')),
+            ExportColumn::make('pocket_money_range')
+                ->label('Uang Saku')
+                ->state(fn(User $record) => static::resolvePocketMoneyRange($record)),
+            ExportColumn::make('uses_electric_smoke')
+                ->label('Merokok Elektrik')
+                ->state(fn(User $record) => static::resolveParticipationYesNo($record, 'uses_electric_smoke')),
+            ExportColumn::make('uses_conventional_smoke')
+                ->label('Merokok Tembakau/Konvensional')
+                ->state(fn(User $record) => static::resolveParticipationYesNo($record, 'uses_conventional_smoke')),
+            ExportColumn::make('uses_both_smoke_types')
+                ->label('Merokok Elektrik dan Tembakau/Konvensional')
+                ->state(fn(User $record) => static::resolveParticipationYesNo($record, 'uses_both_smoke_types')),
         ];
 
         foreach (['pre', 'post'] as $stage) {
             $label = ucfirst($stage);
 
             $columns[] = ExportColumn::make("{$stage}_score")
-                ->label("{$label} Nilai")
+                ->label("{$label} Nilai Pengetahuan")
                 ->state(fn(User $record) => static::resolveScore($record, $stage));
 
             $columns[] = ExportColumn::make("{$stage}_total_benar")
-                ->label("{$label} Total Benar")
+                ->label("{$label} Benar Pengetahuan")
                 ->state(fn(User $record) => static::resolveTotalBenar($record, $stage));
 
             $columns[] = ExportColumn::make("{$stage}_total_soal")
-                ->label("{$label} Total Soal")
+                ->label("{$label} Total Soal Pengetahuan")
                 ->state(fn(User $record) => static::resolveTotalSoal($record, $stage));
-        }
-
-        foreach (['pre', 'post'] as $stage) {
-            for ($i = 1; $i <= $maxNomor; $i++) {
-                $columns[] = ExportColumn::make("{$stage}_p{$i}")
-                    ->label(strtoupper($stage) . ' P' . $i)
-                    ->state($perSoal($stage, $i));
-            }
-        }
-
-        $attitudeQuestions = AttitudeQuestion::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
-
-        foreach ($attitudeQuestions as $index => $question) {
-            $columns[] = ExportColumn::make('sikap_pre_' . ($index + 1))
-                ->label('Sikap Pre ' . ($index + 1))
-                ->state(fn(User $record) => static::resolveAttitudeValue($record, $question->id, 'pre'));
-        }
-
-        foreach ($attitudeQuestions as $index => $question) {
-            $columns[] = ExportColumn::make('sikap_post_' . ($index + 1))
-                ->label('Sikap Post ' . ($index + 1))
-                ->state(fn(User $record) => static::resolveAttitudeValue($record, $question->id, 'post'));
         }
 
         $knowledgeQuestions = KnowledgeQuestion::query()
@@ -143,6 +101,24 @@ class TestAttemptExporter extends Exporter
             $columns[] = ExportColumn::make('pengetahuan_post_' . ($index + 1))
                 ->label('Pengetahuan Post ' . ($index + 1))
                 ->state(fn(User $record) => static::resolveKnowledgeValue($record, $question->id, 'post'));
+        }
+
+        $attitudeQuestions = AttitudeQuestion::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($attitudeQuestions as $index => $question) {
+            $columns[] = ExportColumn::make('sikap_pre_' . ($index + 1))
+                ->label('Sikap Pre ' . ($index + 1))
+                ->state(fn(User $record) => static::resolveAttitudeValue($record, $question->id, 'pre'));
+        }
+
+        foreach ($attitudeQuestions as $index => $question) {
+            $columns[] = ExportColumn::make('sikap_post_' . ($index + 1))
+                ->label('Sikap Post ' . ($index + 1))
+                ->state(fn(User $record) => static::resolveAttitudeValue($record, $question->id, 'post'));
         }
 
         return $columns;
@@ -191,19 +167,18 @@ class TestAttemptExporter extends Exporter
 
     public static function modifyQuery(Builder $query): Builder
     {
-        $table = $query->getModel()->getTable();
-
-        $userSubQuery = (clone $query)
-            ->select("{$table}.user_id")
-            ->groupBy("{$table}.user_id");
-
         return User::query()
-            ->whereIn('id', $userSubQuery)
+            ->where('role', 'siswa')
+            ->where(function (Builder $query) {
+                $query->whereHas('knowledgeAnswers')
+                    ->orWhereHas('attitudeAnswers');
+            })
             ->with([
                 'sekolah:id,nama',
-                'attempts.answers' => fn($q) => $q->with('question:id,nomor'),
+                'examParticipation:user_id,pocket_money_range,uses_electric_smoke,uses_conventional_smoke,uses_both_smoke_types',
                 'attitudeAnswers:id,attitude_question_id,user_id,stage,value',
                 'knowledgeAnswers:id,knowledge_question_id,user_id,stage,value',
+                'knowledgeAnswers.question:id,sort_order,correct_answer',
             ]);
     }
 
@@ -248,61 +223,57 @@ class TestAttemptExporter extends Exporter
         };
     }
 
-    protected static function resolveAttempt(User $record, string $stage): ?TestAttempt
-    {
-        $attempts = $record->relationLoaded('attempts')
-            ? $record->attempts
-            : $record->attempts()->get();
-
-        return $attempts->firstWhere('tipe', $stage);
-    }
-
     protected static function resolveScore(User $record, string $stage): string
     {
-        $attempt = static::resolveAttempt($record, $stage);
-
-        if (! $attempt || is_null($attempt->score)) {
+        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage);
+        if (! $summary) {
             return '';
         }
 
-        return (string) (int) $attempt->score;
+        return (string) (int) $summary['score'];
     }
 
     protected static function resolveTotalBenar(User $record, string $stage): string
     {
-        $attempt = static::resolveAttempt($record, $stage);
-
-        if (! $attempt) {
+        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage);
+        if (! $summary) {
             return '';
         }
 
-        if (! is_null($attempt->total_benar)) {
-            return (string) (int) $attempt->total_benar;
-        }
-
-        $answers = $attempt->relationLoaded('answers')
-            ? $attempt->answers
-            : $attempt->answers()->get();
-
-        return (string) $answers->where('is_correct', true)->count();
+        return (string) (int) $summary['total_benar'];
     }
 
     protected static function resolveTotalSoal(User $record, string $stage): string
     {
-        $attempt = static::resolveAttempt($record, $stage);
-
-        if (! $attempt) {
+        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage);
+        if (! $summary) {
             return '';
         }
 
-        if (! is_null($attempt->total_soal)) {
-            return (string) (int) $attempt->total_soal;
-        }
+        return (string) (int) $summary['total_soal'];
+    }
 
-        $answers = $attempt->relationLoaded('answers')
-            ? $attempt->answers
-            : $attempt->answers()->get();
+    protected static function resolvePocketMoneyRange(User $record): string
+    {
+        $value = $record->examParticipation?->pocket_money_range;
 
-        return (string) $answers->count();
+        return match ($value) {
+            '5000-10000' => '5.000 - 10.000',
+            '10000-20000' => '10.000 - 20.000',
+            '20000-50000' => '20.000 - 50.000',
+            '>50000' => '> 50.000',
+            default => '',
+        };
+    }
+
+    protected static function resolveParticipationYesNo(User $record, string $field): string
+    {
+        $value = $record->examParticipation?->{$field};
+
+        return match ($value) {
+            true => 'Ya',
+            false => 'Tidak',
+            default => '',
+        };
     }
 }

@@ -4,14 +4,16 @@
         $resultTitle = $isPostPhase ? 'Hasil Posttest' : 'Hasil Pretest';
         $testName = $isPostPhase ? 'posttest' : 'pretest';
         $savedLabel = $isPostPhase
-            ? 'Jawaban pertanyaan pengetahuan akhir Anda sudah tersimpan.'
-            : 'Jawaban pertanyaan pengetahuan Anda sudah tersimpan.';
-        $actionLabel = $isPostPhase ? 'Selesai' : 'Selesai Pretest';
+            ? 'Jawaban bagian pengetahuan posttest Anda sudah tersimpan.'
+            : 'Jawaban bagian pengetahuan pretest Anda sudah tersimpan.';
+        $actionLabel = 'Lanjut ke Bagian Sikap';
     @endphp
 
     @if (! ($finished && ! $isPostPhase))
         <div>
-            <h1 class="text-xl font-semibold text-slate-900">Pertanyaan Pengetahuan</h1>
+            <h1 class="text-xl font-semibold text-slate-900">
+                {{ $isPostPhase ? 'Posttest: Bagian Pengetahuan' : 'Pretest: Bagian Pengetahuan' }}
+            </h1>
         </div>
     @endif
 

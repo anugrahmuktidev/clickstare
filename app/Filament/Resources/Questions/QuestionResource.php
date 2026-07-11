@@ -15,14 +15,15 @@ use Filament\Tables\Table;
 class QuestionResource extends Resource
 {
     protected static ?string $model = Question::class;
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChatBubbleLeft;
-    protected static ?string $navigationLabel = 'Pertanyaan';
-    protected static ?string $modelLabel      = 'Pertanyaan';
-    protected static ?string $pluralModelLabel = 'Pertanyaan';
+    protected static ?string $navigationLabel = 'Soal Pre/Post';
+    protected static ?string $modelLabel      = 'Soal Pre/Post';
+    protected static ?string $pluralModelLabel = 'Soal Pre/Post';
     protected static ?int $navigationSort = 40;
 
-    protected static ?string $recordTitleAttribute = 'Pertanyaan';
+    protected static ?string $recordTitleAttribute = 'teks';
 
     public static function form(Schema $schema): Schema
     {

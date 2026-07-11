@@ -81,6 +81,7 @@
         <div class="flex items-center justify-between gap-3">
           <div>
             <p class="font-semibold text-sm">Pretest</p>
+            <p class="text-xs text-gray-500 mt-1">Urutan siswa: Pengetahuan lalu Sikap.</p>
           </div>
           <span class="px-2 py-1 rounded text-xs font-semibold {{ $isPretestEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700' }}">
             {{ $isPretestEnabled ? 'Aktif' : 'Nonaktif' }}
@@ -109,6 +110,7 @@
         <div class="flex items-center justify-between gap-3">
           <div>
             <p class="font-semibold text-sm">Posttest</p>
+            <p class="text-xs text-gray-500 mt-1">Urutan siswa: Pengetahuan lalu Sikap.</p>
           </div>
           <span class="px-2 py-1 rounded text-xs font-semibold {{ $isPosttestEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700' }}">
             {{ $isPosttestEnabled ? 'Aktif' : 'Nonaktif' }}
@@ -355,17 +357,12 @@
     {{-- Mobile: list cards --}}
     <div class="md:hidden space-y-3">
       @forelse ($students as $s)
-        @php
-          $pre  = optional($s->attempts->firstWhere('tipe','pre'))->score;
-          $post = optional($s->attempts->firstWhere('tipe','post'))->score;
-          $last = optional($s->attempts->first())->created_at;
-        @endphp
         <div class="border rounded-lg p-3">
           <div class="font-medium">{{ $s->name }}</div>
           <div class="mt-1 grid grid-cols-2 gap-2 text-sm">
-            <div><span class="text-gray-500">Pretest:</span> <b>{{ $pre !== null ? $pre : '—' }}</b></div>
-            <div><span class="text-gray-500">Posttest:</span> <b>{{ $post !== null ? $post : '—' }}</b></div>
-            <div class="col-span-2 text-gray-600">Terakhir: {{ $last?->diffForHumans() ?? '—' }}</div>
+            <div><span class="text-gray-500">Pretest:</span> <b>{{ $s->pre_score !== null ? $s->pre_score : '—' }}</b></div>
+            <div><span class="text-gray-500">Posttest:</span> <b>{{ $s->post_score !== null ? $s->post_score : '—' }}</b></div>
+            <div class="col-span-2 text-gray-600">Terakhir: {{ $s->last_answered_at?->diffForHumans() ?? '—' }}</div>
           </div>
         </div>
       @empty
@@ -386,16 +383,11 @@
         </thead>
         <tbody>
           @forelse ($students as $s)
-            @php
-              $pre  = optional($s->attempts->firstWhere('tipe','pre'))->score;
-              $post = optional($s->attempts->firstWhere('tipe','post'))->score;
-              $last = optional($s->attempts->first())->created_at;
-            @endphp
             <tr class="border-t">
               <td class="py-2 pr-4">{{ $s->name }}</td>
-              <td class="py-2 pr-4">{{ $pre !== null ? $pre : '—' }}</td>
-              <td class="py-2 pr-4">{{ $post !== null ? $post : '—' }}</td>
-              <td class="py-2 pr-4 text-gray-600">{{ $last?->diffForHumans() ?? '—' }}</td>
+              <td class="py-2 pr-4">{{ $s->pre_score !== null ? $s->pre_score : '—' }}</td>
+              <td class="py-2 pr-4">{{ $s->post_score !== null ? $s->post_score : '—' }}</td>
+              <td class="py-2 pr-4 text-gray-600">{{ $s->last_answered_at?->diffForHumans() ?? '—' }}</td>
             </tr>
           @empty
             <tr><td colspan="4" class="py-4 text-center text-gray-500">Belum ada data.</td></tr>

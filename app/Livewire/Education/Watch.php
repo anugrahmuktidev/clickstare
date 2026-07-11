@@ -4,7 +4,7 @@ namespace App\Livewire\Education;
 
 use Livewire\Component;
 use App\Models\Video;
-use App\Models\TestAttempt;
+use App\Support\KnowledgeTestSummary;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,10 +19,7 @@ class Watch extends Component
         $user = Auth::user();
 
         if ($user?->isSiswa()) {
-            $hasPretestAttempt = TestAttempt::query()
-                ->where('user_id', $user->id)
-                ->where('tipe', 'pre')
-                ->exists();
+            $hasPretestAttempt = KnowledgeTestSummary::summarizeForUser($user, 'pre') !== null;
 
             if (! $hasPretestAttempt) {
                 session()->flash('error', 'Selesaikan pretest terlebih dahulu untuk membuka video edukasi.');

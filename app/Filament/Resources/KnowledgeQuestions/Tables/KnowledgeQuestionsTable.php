@@ -22,9 +22,12 @@ class KnowledgeQuestionsTable
                     ->label('Urutan')
                     ->sortable(),
                 TextColumn::make('teks')
-                    ->label('Pertanyaan')
+                    ->label('Soal')
                     ->wrap()
                     ->searchable(),
+                TextColumn::make('correct_answer')
+                    ->label('Kunci')
+                    ->formatStateUsing(fn (?string $state) => $state === 'SALAH' ? 'Salah' : 'Benar'),
                 IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean(),
@@ -45,7 +48,7 @@ class KnowledgeQuestionsTable
                 EditAction::make()->label('Ubah'),
             ])
             ->toolbarActions([
-                CreateAction::make()->label('Tambah Pertanyaan'),
+                CreateAction::make()->label('Tambah Soal'),
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),

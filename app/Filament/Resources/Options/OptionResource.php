@@ -18,6 +18,7 @@ use Filament\Tables\Table;
 class OptionResource extends Resource
 {
     protected static ?string $model = Option::class;
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedQuestionMarkCircle;
     protected static ?string $navigationLabel = 'Jawaban';

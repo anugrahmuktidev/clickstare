@@ -45,7 +45,7 @@ class AttitudeQuestionsTable
                 EditAction::make()->label('Ubah'),
             ])
             ->toolbarActions([
-                CreateAction::make()->label('Tambah Pertanyaan'),
+                CreateAction::make()->label('Tambah Pernyataan'),
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),

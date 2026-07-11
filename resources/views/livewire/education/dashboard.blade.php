@@ -18,11 +18,10 @@
         <div class="flex-1">
           <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Selamat!</p>
           <p class="text-base sm:text-lg font-semibold text-emerald-900 mt-1">
-            Anda menuntaskan posttest dengan {{ $certificateAttempt->total_benar }} jawaban benar dari
-            {{ $certificateAttempt->total_soal }} soal.
+            Anda telah menyelesaikan seluruh rangkaian posttest.
           </p>
           <p class="text-sm text-emerald-800 mt-1">
-            Unduh sertifikat kelulusan sebagai bukti menyelesaikan program edukasi SAARe.
+            Unduh sertifikat sebagai bukti menyelesaikan program edukasi SAARe.
           </p>
         </div>
         <a href="{{ route('education.certificate.download') }}" class="inline-flex items-center justify-center px-4 py-2.5
@@ -122,7 +121,7 @@
               @if ($pretestAttempt)
                 <div class="mt-3 space-y-1 text-sm text-slate-700">
                   <p>Benar: <span class="font-semibold">{{ $pretestAttempt->total_benar }}</span> / {{ $pretestAttempt->total_soal }}</p>
-                  <p>Dikerjakan: {{ $pretestAttempt->created_at->format('d M Y, H:i') }}</p>
+                  <p>Dikerjakan: {{ optional($pretestAttempt->answered_at)->format('d M Y, H:i') ?? '—' }}</p>
                 </div>
               @else
                 <p class="mt-3 text-sm text-slate-600">Belum mengerjakan pretest.</p>
@@ -146,7 +145,7 @@
               @if ($posttestAttempt)
                 <div class="mt-3 space-y-1 text-sm text-slate-700">
                   <p>Benar: <span class="font-semibold">{{ $posttestAttempt->total_benar }}</span> / {{ $posttestAttempt->total_soal }}</p>
-                  <p>Dikerjakan: {{ $posttestAttempt->created_at->format('d M Y, H:i') }}</p>
+                  <p>Dikerjakan: {{ optional($posttestAttempt->answered_at)->format('d M Y, H:i') ?? '—' }}</p>
                 </div>
               @else
                 <p class="mt-3 text-sm text-slate-600">Belum mengerjakan posttest.</p>
@@ -174,7 +173,7 @@
         <div class="flex flex-wrap gap-3">
           @if ($showPretestButton)
             <a href="{{ route('exam.pretest') }}"
-              onclick="@if ($pretestAttempt) alert('Anda sudah mengerjakan pretest. Lihat hasilnya pada bagian Hasil Tes Anda.'); return false; @else return confirm('Mulai pretest sekarang? Anda akan melanjutkan ke pertanyaan sikap dan pertanyaan pengetahuan setelah pretest selesai.'); @endif"
+              onclick="return confirm('Mulai pretest sekarang? Urutannya adalah pertanyaan pengetahuan terlebih dahulu, lalu pertanyaan sikap.');"
               style="background-color:#2563eb;color:#ffffff;border:1px solid #1d4ed8;"
               class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 transition">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -186,7 +185,7 @@
 
           @if ($showPosttestButton)
             <a href="{{ route('exam.posttest') }}"
-              onclick="@if ($posttestAttempt) alert('Anda sudah mengerjakan posttest. Lihat hasilnya pada bagian Hasil Tes Anda.'); return false; @else return confirm('Mulai posttest sekarang? Anda akan melanjutkan ke pertanyaan sikap akhir dan pertanyaan pengetahuan akhir setelah posttest selesai.'); @endif"
+              onclick="return confirm('Mulai posttest sekarang? Urutannya adalah pertanyaan pengetahuan terlebih dahulu, lalu pertanyaan sikap.');"
               style="background-color:#f97316;color:#ffffff;border:1px solid #ea580c;"
               class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-orange-500 text-white text-sm font-semibold shadow-sm hover:bg-orange-600 transition">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -199,18 +198,26 @@
 
         @if (! $showPretestButton || ! $showPosttestButton)
           <p class="text-xs text-gray-500 mt-3">
-            @if (! $showPretestButton && ! $showPosttestButton)
-              Pretest dan posttest belum dibuka oleh admin sekolah.
-            @elseif (! $showPretestButton)
-              Pretest belum dibuka oleh admin sekolah.
-            @else
-              Posttest belum dibuka oleh admin sekolah.
+            @if (! $pretestAttempt && ! $showPretestButton && ! $showPosttestButton)
+              Pretest dan posttest belum dibuka oleh admin atau guru.
+            @elseif (! $showPretestButton && ! $pretestAttempt)
+              Pretest belum dibuka oleh admin atau guru.
+            @elseif ($pretestAttempt && ! $showPosttestButton && ! $posttestAttempt)
+              Posttest belum dibuka oleh admin atau guru.
+            @elseif ($pretestAttempt)
+              Pretest sudah selesai. Video edukasi sudah dapat diakses.
             @endif
           </p>
         @endif
       @else
         <p class="text-sm text-gray-600">
-          Pretest dan posttest untuk sekolah Anda saat ini belum dibuka oleh admin.
+          @if ($posttestAttempt)
+            Pretest dan posttest sudah selesai dikerjakan.
+          @elseif ($pretestAttempt)
+            Pretest sudah selesai. Posttest belum tersedia saat ini.
+          @else
+            Pretest dan posttest untuk sekolah Anda saat ini belum dibuka oleh admin atau guru.
+          @endif
         </p>
       @endif
     </section>

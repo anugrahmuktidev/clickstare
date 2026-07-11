@@ -1,17 +1,22 @@
 <div class="w-full max-w-3xl mx-auto bg-white rounded-lg shadow p-6 space-y-6">
     @php
         $isPostPhase = $phase === 'post';
-        $actionLabel = $isPostPhase ? 'Lanjut Pertanyaan Pengetahuan Akhir' : 'Lanjut Pertanyaan Pengetahuan';
+        $actionLabel = $isPostPhase ? 'Selesaikan Posttest' : 'Selesaikan Pretest';
+        $savedLabel = $isPostPhase
+            ? 'Jawaban bagian sikap posttest Anda sudah tersimpan.'
+            : 'Jawaban bagian sikap pretest Anda sudah tersimpan.';
     @endphp
 
     <div>
-        <h1 class="text-xl font-semibold text-slate-900">Pertanyaan Sikap</h1>
+        <h1 class="text-xl font-semibold text-slate-900">
+            {{ $isPostPhase ? 'Posttest: Bagian Sikap' : 'Pretest: Bagian Sikap' }}
+        </h1>
     </div>
 
     @if ($finished)
         <div class="space-y-5">
             <div class="rounded-lg border border-slate-200 bg-slate-50 p-5">
-                <p class="text-sm text-slate-700">Jawaban pertanyaan sikap Anda sudah tersimpan.</p>
+                <p class="text-sm text-slate-700">{{ $savedLabel }}</p>
             </div>
 
             <div class="flex items-center justify-end">

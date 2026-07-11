@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TestAttempt;
+use App\Support\KnowledgeTestSummary;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class CertificateController extends Controller
@@ -12,24 +13,22 @@ class CertificateController extends Controller
     public function __invoke(Request $request)
     {
         $user = $request->user();
+        $attempt = KnowledgeTestSummary::summarizeForUser($user, 'post');
 
-        $minCorrect = (int) config('exam.certificate_min_correct', 8);
-
-        $attempt = TestAttempt::query()
-            ->where('user_id', $user->id)
-            ->where('tipe', 'post')
-            ->where('total_benar', '>=', $minCorrect)
-            ->latest('created_at')
-            ->first();
-
-        if (!$attempt) {
-            abort(403, 'Sertifikat hanya tersedia setelah Anda lulus posttest.');
+        if (! $attempt) {
+            abort(403, 'Sertifikat hanya tersedia setelah Anda menyelesaikan posttest.');
         }
+
+        $backgroundPath = public_path('images/sertifikat.png');
+        abort_unless(File::exists($backgroundPath), 500, 'Template sertifikat tidak ditemukan.');
+
+        $backgroundDataUri = 'data:image/png;base64,' . base64_encode(File::get($backgroundPath));
 
         $pdf = Pdf::loadView('education.certificate', [
             'user' => $user,
-            'attempt' => $attempt,
+            'attempt' => (object) $attempt,
             'issuedAt' => now(),
+            'backgroundDataUri' => $backgroundDataUri,
         ])->setPaper('a4', 'landscape');
 
         $filename = 'sertifikat-' . Str::slug($user->name) . '.pdf';

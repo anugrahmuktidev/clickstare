@@ -157,22 +157,24 @@ class Sikap extends Component
         if ($this->phase === 'post') {
             $p->update([
                 'sikap_post_completed_at' => now(),
-                'current_step'            => 'pengetahuan_test_post',
+                'posttest_completed_at'   => now(),
+                'current_step'            => 'done',
             ]);
 
-            session()->flash('success', 'Pertanyaan sikap akhir selesai. Lanjut pertanyaan pengetahuan akhir.');
-            $this->redirectRoute('exam.pengetahuan_test_post', navigate: true);
+            session()->flash('success', 'Posttest selesai.');
+            $this->redirectRoute('education.index', navigate: true);
             return;
         }
 
         $p->update([
-            'sikap_completed_at' => now(),
-            'current_step'       => 'pengetahuan_test',
+            'sikap_completed_at'   => now(),
+            'pretest_completed_at' => now(),
+            'current_step'         => 'posttest',
         ]);
 
-        session()->flash('success', 'Pertanyaan sikap selesai. Lanjut pertanyaan pengetahuan.');
+        session()->flash('success', 'Pretest selesai. Video edukasi sudah terbuka.');
 
-        $this->redirectRoute('exam.pengetahuan_test', navigate: true);
+        $this->redirectRoute('education.index', navigate: true);
     }
 
     public function render()

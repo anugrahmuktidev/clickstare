@@ -128,20 +128,32 @@ class PengetahuanTest extends Component
         $userId = Auth::id();
         $questionIds = $this->questions->pluck('id')->all();
         $now = now();
+        $totalSoal = $this->questions->count();
+        $totalBenar = 0;
 
         $rows = [];
         foreach ($this->questions as $question) {
+            $selected = $this->answers[$question->id];
+            $correct = $this->normalizeAnswerValue($question->correct_answer);
+
+            if ($this->normalizeAnswerValue($selected) === $correct) {
+                $totalBenar++;
+            }
+
             $rows[] = [
                 'knowledge_question_id' => $question->id,
                 'user_id'               => $userId,
                 'stage'                 => $this->phase,
-                'value'                 => $this->answers[$question->id],
+                'value'                 => $selected,
                 'created_at'            => $now,
                 'updated_at'            => $now,
             ];
         }
 
-        DB::transaction(function () use ($rows, $userId, $questionIds) {
+        $score = (int) round(($totalBenar / max(1, $totalSoal)) * 100);
+        $attemptType = $this->phase === 'post' ? 'post' : 'pre';
+
+        DB::transaction(function () use ($rows, $userId, $questionIds, $attemptType, $totalSoal, $totalBenar, $score) {
             KnowledgeAnswer::query()
                 ->where('user_id', $userId)
                 ->where('stage', $this->phase)
@@ -149,8 +161,25 @@ class PengetahuanTest extends Component
                 ->delete();
 
             KnowledgeAnswer::insert($rows);
+
+            TestAttempt::query()->updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'tipe' => $attemptType,
+                ],
+                [
+                    'total_soal' => $totalSoal,
+                    'total_benar' => $totalBenar,
+                    'score' => $score,
+                ]
+            );
         });
 
+        $this->testResult = [
+            'total_soal' => $totalSoal,
+            'total_benar' => $totalBenar,
+            'score' => $score,
+        ];
         $this->finished = true;
     }
 
@@ -166,22 +195,22 @@ class PengetahuanTest extends Component
         if ($this->phase === 'post') {
             $p->update([
                 'knowledge_test_post_completed_at' => now(),
-                'current_step'                     => 'done',
+                'current_step'                     => 'sikap_post',
             ]);
 
-            session()->flash('success', 'Pertanyaan pengetahuan akhir selesai.');
-            $this->redirectRoute('education.index', navigate: true);
+            session()->flash('success', 'Bagian pengetahuan posttest selesai. Lanjut ke bagian sikap.');
+            $this->redirectRoute('exam.sikap_post', navigate: true);
             return;
         }
 
         $p->update([
             'knowledge_test_completed_at' => now(),
-            'current_step'                => 'posttest',
+            'current_step'                => 'sikap',
         ]);
 
-        session()->flash('success', 'Pretest selesai.');
+        session()->flash('success', 'Bagian pengetahuan pretest selesai. Lanjut ke bagian sikap.');
 
-        $this->redirectRoute('education.index', navigate: true);
+        $this->redirectRoute('exam.sikap', navigate: true);
     }
 
     protected function loadTestResult(string $tipe, ?int $attemptId = null): ?array

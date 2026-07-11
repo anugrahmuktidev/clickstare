@@ -19,9 +19,9 @@ class AttitudeQuestionResource extends Resource
     protected static ?string $model = AttitudeQuestion::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-    protected static ?string $navigationLabel = 'Pertanyaan Sikap';
-    protected static ?string $modelLabel = 'Pertanyaan Sikap';
-    protected static ?string $pluralModelLabel = 'Pertanyaan Sikap';
+    protected static ?string $navigationLabel = 'Soal Sikap';
+    protected static ?string $modelLabel = 'Soal Sikap';
+    protected static ?string $pluralModelLabel = 'Soal Sikap';
     protected static ?int $navigationSort = 45;
     protected static ?string $recordTitleAttribute = 'teks';
 

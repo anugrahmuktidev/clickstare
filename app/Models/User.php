@@ -84,6 +84,11 @@ class User extends Authenticatable
         return $this->hasMany(KnowledgeAnswer::class);
     }
 
+    public function examParticipation()
+    {
+        return $this->hasOne(ExamParticipation::class);
+    }
+
     /* ===========================
      | Helper Role
      |===========================*/

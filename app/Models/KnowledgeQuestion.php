@@ -11,6 +11,7 @@ class KnowledgeQuestion extends Model
 
     protected $fillable = [
         'teks',
+        'correct_answer',
         'sort_order',
         'is_active',
     ];

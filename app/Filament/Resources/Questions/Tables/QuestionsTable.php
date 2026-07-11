@@ -25,8 +25,10 @@ class QuestionsTable
                 TextColumn::make('nomor')
                     ->label('No.')
                     ->sortable(),
-                TextColumn::make('teks'),
-                TextColumn::make('tipe'),
+                TextColumn::make('teks')
+                    ->label('Soal'),
+                TextColumn::make('tipe')
+                    ->label('Tipe'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

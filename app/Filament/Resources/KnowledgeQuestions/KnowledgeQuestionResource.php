@@ -19,9 +19,9 @@ class KnowledgeQuestionResource extends Resource
     protected static ?string $model = KnowledgeQuestion::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-    protected static ?string $navigationLabel = 'Pertanyaan Pengetahuan';
-    protected static ?string $modelLabel = 'Pertanyaan Pengetahuan';
-    protected static ?string $pluralModelLabel = 'Pertanyaan Pengetahuan';
+    protected static ?string $navigationLabel = 'Soal Pengetahuan';
+    protected static ?string $modelLabel = 'Soal Pengetahuan';
+    protected static ?string $pluralModelLabel = 'Soal Pengetahuan';
     protected static ?int $navigationSort = 46;
     protected static ?string $recordTitleAttribute = 'teks';
 

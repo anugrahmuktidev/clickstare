@@ -12,9 +12,8 @@ class OptionForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
-            // ⬇️ GANTI BAGIAN INI
             Select::make('question_id')
-                ->label('Pertanyaan')
+                ->label('Soal')
                 ->relationship('question', 'teks')
                 ->getOptionLabelFromRecordUsing(
                     fn($record) =>

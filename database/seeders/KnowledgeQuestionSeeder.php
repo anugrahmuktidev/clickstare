@@ -26,6 +26,7 @@ class KnowledgeQuestionSeeder extends Seeder
             KnowledgeQuestion::firstOrCreate(
                 ['teks' => $text],
                 [
+                    'correct_answer' => 'BENAR',
                     'sort_order' => $index + 1,
                     'is_active'  => true,
                 ]

@@ -17,12 +17,12 @@ class SekolahForm
                 TextInput::make('alamat'),
                 Toggle::make('is_pretest_enabled')
                     ->label('Tampilkan & aktifkan Pretest')
-                    ->helperText('Jika nonaktif, tombol pretest disembunyikan dan URL pretest/sikap/pengetahuan akan diblokir untuk sekolah ini.')
+                    ->helperText('Jika nonaktif, siswa tidak dapat melihat tombol Pretest atau membuka rangkaian Pretest (pengetahuan lalu sikap).')
                     ->default(false)
                     ->inline(false),
                 Toggle::make('is_posttest_enabled')
                     ->label('Tampilkan & aktifkan Posttest')
-                    ->helperText('Jika nonaktif, tombol posttest disembunyikan dan URL posttest/sikap akhir/pengetahuan akhir akan diblokir untuk sekolah ini.')
+                    ->helperText('Jika nonaktif, siswa tidak dapat melihat tombol Posttest atau membuka rangkaian Posttest (pengetahuan lalu sikap).')
                     ->default(false)
                     ->inline(false),
             ]);

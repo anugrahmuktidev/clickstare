@@ -3,8 +3,8 @@
 namespace App\Livewire\Education;
 
 use App\Models\Faq;
-use App\Models\TestAttempt;
 use App\Models\Video;
+use App\Support\KnowledgeTestSummary;
 use Livewire\Component;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
@@ -143,7 +143,6 @@ class Dashboard extends Component
             ->latest()->paginate(10);
 
         $certificateAttempt = null;
-        $certificateMinCorrect = (int) config('exam.certificate_min_correct', 8);
         $showPretestButton = false;
         $showPosttestButton = false;
         $pretestAttempt = null;
@@ -151,29 +150,22 @@ class Dashboard extends Component
         $canWatchEducationVideo = true;
 
         if ($user->isSiswa()) {
-            $showPretestButton = (bool) ($user->sekolah?->is_pretest_enabled ?? false);
-            $showPosttestButton = (bool) ($user->sekolah?->is_posttest_enabled ?? false);
+            $pretestAttempt = KnowledgeTestSummary::summarizeForUser($user, 'pre');
+            $posttestAttempt = KnowledgeTestSummary::summarizeForUser($user, 'post');
 
-            $pretestAttempt = TestAttempt::query()
-                ->where('user_id', $user->id)
-                ->where('tipe', 'pre')
-                ->latest('created_at')
-                ->first();
+            $pretestAttempt = $pretestAttempt ? (object) $pretestAttempt : null;
+            $posttestAttempt = $posttestAttempt ? (object) $posttestAttempt : null;
 
-            $posttestAttempt = TestAttempt::query()
-                ->where('user_id', $user->id)
-                ->where('tipe', 'post')
-                ->latest('created_at')
-                ->first();
+            $showPretestButton = (bool) ($user->sekolah?->is_pretest_enabled ?? false) && $pretestAttempt === null;
+            $showPosttestButton = (bool) ($user->sekolah?->is_posttest_enabled ?? false)
+                && $pretestAttempt !== null
+                && $posttestAttempt === null;
 
             $canWatchEducationVideo = $pretestAttempt !== null;
 
-            $certificateAttempt = TestAttempt::query()
-                ->where('user_id', $user->id)
-                ->where('tipe', 'post')
-                ->where('total_benar', '>=', $certificateMinCorrect)
-                ->latest('created_at')
-                ->first();
+            if ($posttestAttempt) {
+                $certificateAttempt = $posttestAttempt;
+            }
         }
 
         return view('livewire.education.dashboard', [
@@ -181,7 +173,6 @@ class Dashboard extends Component
             'faqs' => $faqs,
             'threads' => $threads,
             'certificateAttempt' => $certificateAttempt,
-            'certificateMinCorrect' => $certificateMinCorrect,
             'showPretestButton' => $showPretestButton,
             'showPosttestButton' => $showPosttestButton,
             'pretestAttempt' => $pretestAttempt,

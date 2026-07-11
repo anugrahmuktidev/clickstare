@@ -25,7 +25,7 @@ class QuestionForm
                     ->visibleOn('edit'),
 
                 TextInput::make('teks')
-                    ->label('Teks Pertanyaan')
+                    ->label('Teks Soal')
                     ->required()
                     ->maxLength(500),
             ]);

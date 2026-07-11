@@ -12,6 +12,10 @@ class ExamParticipation extends Model
     protected $fillable = [
         'user_id',
         'current_step',
+        'pocket_money_range',
+        'uses_electric_smoke',
+        'uses_conventional_smoke',
+        'uses_both_smoke_types',
         'pretest_completed_at',
         'sikap_completed_at',
         'knowledge_test_completed_at',
@@ -22,6 +26,9 @@ class ExamParticipation extends Model
     ];
 
     protected $casts = [
+        'uses_electric_smoke' => 'boolean',
+        'uses_conventional_smoke' => 'boolean',
+        'uses_both_smoke_types' => 'boolean',
         'pretest_completed_at'  => 'datetime',
         'sikap_completed_at'    => 'datetime',
         'knowledge_test_completed_at' => 'datetime',

@@ -2,302 +2,81 @@
 
 namespace App\Livewire\Exam;
 
-use Livewire\Component;
-use App\Models\Question;
-use App\Models\TestAnswer;
-use App\Models\TestAttempt;
-use Livewire\Attributes\Layout;
 use App\Models\ExamParticipation;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.guest')]
 class Pretest extends Component
 {
-    /** @var \Illuminate\Support\Collection<int,\App\Models\Question> */
-    public $questions;
+    public array $pocketMoneyOptions = [
+        '5000-10000' => '5.000 - 10.000',
+        '10000-20000' => '10.000 - 20.000',
+        '20000-50000' => '20.000 - 50.000',
+        '>50000' => '> 50.000',
+    ];
 
-    /** jawaban[question_id] = option_id */
-    public array $jawaban = [];
+    public ?string $pocket_money_range = null;
+    public ?string $uses_electric_smoke = null;
+    public ?string $uses_conventional_smoke = null;
+    public ?string $uses_both_smoke_types = null;
 
-    /** index soal aktif (0-based) */
-    public int $current = 0;
-
-    public int $total = 0;
-
-    /** durasi maksimum per soal (detik) */
-    public int $perQuestionSeconds = 120;
-    public int $secondsRemaining = 0;
-    public int $questionStartedAt = 0;
-    public bool $timedOut = false;
-
-    public function mount()
+    public function mount(): void
     {
-        $p = ExamParticipation::firstOrCreate(
+        $participation = ExamParticipation::firstOrCreate(
             ['user_id' => Auth::id()],
             ['current_step' => 'pretest']
         );
 
-        if ($p->current_step !== 'pretest') {
-            $this->redirectRoute("exam.{$p->current_step}", navigate: true);
+        if ($participation->current_step !== 'pretest') {
+            $this->redirectRoute("exam.{$participation->current_step}", navigate: true);
             return;
         }
 
-        $this->questions = Question::with('options')
-            ->where('tipe', 'pre')
-            ->orderBy('nomor')
-            ->get()
-            ->values();
-
-        $this->total = $this->questions->count();
-
-        foreach ($this->questions as $q) {
-            if (! array_key_exists($q->id, $this->jawaban)) {
-                $this->jawaban[$q->id] = null; // default null = belum jawab
-            }
-        }
-
-        if ($this->total === 0) {
-            $this->completeWithoutQuestions();
-            return;
-        }
-
-        $this->startTimerForCurrentQuestion();
+        $this->pocket_money_range = $participation->pocket_money_range;
+        $this->uses_electric_smoke = $this->toYesNo($participation->uses_electric_smoke);
+        $this->uses_conventional_smoke = $this->toYesNo($participation->uses_conventional_smoke);
+        $this->uses_both_smoke_types = $this->toYesNo($participation->uses_both_smoke_types);
     }
 
-    /** Livewire: setiap ada update properti */
-    public function updated(string $name, $value): void
+    public function submit(): void
     {
-        if (str_starts_with($name, 'jawaban.')) {
-            $qid = (int) substr($name, strlen('jawaban.'));
-            $this->resetErrorBag("jawaban.$qid"); // bersihkan error utk soal tsb
-        }
-    }
-
-    public function prev(): void
-    {
-        // Navigasi balik dinonaktifkan untuk pretest.
-        return;
-    }
-
-    public function next(bool $force = false): void
-    {
-        $this->resetErrorBag();
-
-        if ($this->total === 0) return;
-
-        $qid = optional($this->questions[$this->current])->id;
-        if (! $force && $qid !== null && $this->jawaban[$qid] === null) {
-            $this->addError("jawaban.$qid", 'Pilih satu jawaban terlebih dahulu.');
-            return;
-        }
-
-        if ($this->current < $this->total - 1) {
-            $this->forgetTimerForIndex($this->current);
-            $this->current++;
-            $this->startTimerForCurrentQuestion(reset: true);
-        } elseif ($force) {
-            $this->timedOut = true;
-            $this->submit(force: true);
-        }
-    }
-
-    public function goTo(int $index): void
-    {
-        $this->resetErrorBag();
-        if ($index <= $this->current || $index >= $this->total) {
-            return;
-        }
-
-        if ($this->total === 0) {
-            return;
-        }
-
-        $qid = optional($this->questions[$this->current])->id;
-        if ($qid !== null && $this->jawaban[$qid] === null) {
-            $this->addError("jawaban.$qid", 'Pilih satu jawaban terlebih dahulu.');
-            return;
-        }
-
-        $this->forgetTimerForIndex($this->current);
-        $this->current = $index;
-        $this->startTimerForCurrentQuestion(reset: true);
-    }
-
-    public function submit(bool $force = false)
-    {
-        $this->resetErrorBag();
-
-        if (! $force) {
-            foreach ($this->questions as $q) {
-                if ($this->jawaban[$q->id] === null) {
-                    $this->addError("jawaban.$q->id", 'Masih ada soal yang belum dijawab.');
-                }
-            }
-            if ($this->getErrorBag()->isNotEmpty()) {
-                return;
-            }
-        }
-
-        $benar = 0;
-        foreach ($this->questions as $q) {
-            $chosen = $this->jawaban[$q->id] ?? null;
-            if ($chosen !== null) {
-                $opt = $q->options->firstWhere('id', (int) $chosen);
-                if ($opt && $opt->benar) {
-                    $benar++;
-                }
-            }
-        }
-        $score = (int) round(($benar / max(1, $this->total)) * 100);
-
-        $attempt = TestAttempt::create([
-            'user_id'     => Auth::id(),
-            'tipe'        => 'pre',
-            'total_soal'  => $this->total,
-            'total_benar' => $benar,
-            'score'       => $score,
+        $data = $this->validate([
+            'pocket_money_range' => ['required', 'in:' . implode(',', array_keys($this->pocketMoneyOptions))],
+            'uses_electric_smoke' => ['required', 'in:ya,tidak'],
+            'uses_conventional_smoke' => ['required', 'in:ya,tidak'],
+            'uses_both_smoke_types' => ['required', 'in:ya,tidak'],
+        ], [], [
+            'pocket_money_range' => 'uang saku',
+            'uses_electric_smoke' => 'merokok elektrik',
+            'uses_conventional_smoke' => 'merokok tembakau/konvensional',
+            'uses_both_smoke_types' => 'merokok elektrik dan konvensional/tembakau',
         ]);
 
-        $rows = [];
-        $now  = now();
-        foreach ($this->questions as $q) {
-            $chosenId = $this->jawaban[$q->id] ?? null;
-
-            if ($chosenId === null) {
-                continue;
-            }
-
-            $chosenId  = (int) $chosenId;
-            $isCorrect = (bool) optional($q->options->firstWhere('id', $chosenId))->benar;
-
-            $rows[] = [
-                'test_attempt_id' => $attempt->id,
-                'question_id'     => $q->id,
-                'option_id'       => $chosenId,
-                'is_correct'      => $isCorrect,
-                'created_at'      => $now,
-                'updated_at'      => $now,
-            ];
-        }
-
-        if (! empty($rows)) {
-            TestAnswer::insert($rows);
-        }
-
-        $this->finalizeAttempt($attempt);
-    }
-
-    protected function finalizeAttempt(TestAttempt $attempt): void
-    {
-        $this->clearTimerSessions();
-        $this->secondsRemaining = 0;
-        $this->questionStartedAt = 0;
-
-        $p = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
-
-        $p->update([
-            'pretest_completed_at' => now(),
-            'current_step'         => 'sikap',
+        $participation = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
+        $participation->update([
+            'pocket_money_range' => $data['pocket_money_range'],
+            'uses_electric_smoke' => $data['uses_electric_smoke'] === 'ya',
+            'uses_conventional_smoke' => $data['uses_conventional_smoke'] === 'ya',
+            'uses_both_smoke_types' => $data['uses_both_smoke_types'] === 'ya',
+            'current_step' => 'pengetahuan_test',
         ]);
 
-        session(['pretest_attempt_id' => $attempt->id]);
-
-        if ($this->timedOut) {
-            session(['pretest_timed_out' => true]);
-        } else {
-            session()->forget('pretest_timed_out');
-        }
-
-        $this->redirectRoute('exam.sikap', navigate: true);
-    }
-
-    protected function completeWithoutQuestions(): void
-    {
-        $attempt = TestAttempt::create([
-            'user_id'     => Auth::id(),
-            'tipe'        => 'pre',
-            'total_soal'  => 0,
-            'total_benar' => 0,
-            'score'       => 0,
-        ]);
-
-        $this->finalizeAttempt($attempt);
-    }
-
-    public function tick(): void
-    {
-        if ($this->total === 0) {
-            return;
-        }
-
-        $this->updateTimer();
-
-        if ($this->secondsRemaining <= 0) {
-            $this->next(force: true);
-        }
-    }
-
-    protected function startTimerForCurrentQuestion(bool $reset = false): void
-    {
-        if ($this->total === 0) {
-            $this->secondsRemaining = 0;
-            return;
-        }
-
-        $key = $this->timerSessionKey($this->current);
-        $start = (int) session($key, 0);
-
-        if ($reset || $start <= 0) {
-            $start = now()->timestamp;
-            session([$key => $start]);
-        }
-
-        $this->questionStartedAt = $start;
-        $this->updateTimerInternal();
-    }
-
-    protected function updateTimer(): void
-    {
-        if ($this->questionStartedAt <= 0) {
-            $this->startTimerForCurrentQuestion();
-            return;
-        }
-
-        $this->updateTimerInternal();
-    }
-
-    protected function updateTimerInternal(): void
-    {
-        $now = now()->timestamp;
-        $elapsed = $now - $this->questionStartedAt;
-
-        if ($elapsed < 0) {
-            $elapsed = 0;
-        }
-
-        $remaining = $this->perQuestionSeconds - $elapsed;
-        $this->secondsRemaining = max(0, $remaining);
-    }
-
-    protected function timerSessionKey(int $index): string
-    {
-        return "pretest_question_{$index}_started_at";
-    }
-
-    protected function forgetTimerForIndex(int $index): void
-    {
-        session()->forget($this->timerSessionKey($index));
-    }
-
-    protected function clearTimerSessions(): void
-    {
-        for ($i = 0; $i < $this->total; $i++) {
-            session()->forget($this->timerSessionKey($i));
-        }
+        $this->redirectRoute('exam.pengetahuan_test', navigate: true);
     }
 
     public function render()
     {
         return view('livewire.exam.pretest');
+    }
+
+    protected function toYesNo(?bool $value): ?string
+    {
+        return match ($value) {
+            true => 'ya',
+            false => 'tidak',
+            default => null,
+        };
     }
 }

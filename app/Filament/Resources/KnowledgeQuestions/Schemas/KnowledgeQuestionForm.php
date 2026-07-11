@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\KnowledgeQuestions\Schemas;
 
 use App\Models\KnowledgeQuestion;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -15,10 +16,19 @@ class KnowledgeQuestionForm
         return $schema
             ->components([
                 Textarea::make('teks')
-                    ->label('Pertanyaan')
+                    ->label('Soal')
                     ->rows(3)
                     ->required()
                     ->maxLength(1000),
+
+                Select::make('correct_answer')
+                    ->label('Kunci Jawaban')
+                    ->options([
+                        'BENAR' => 'Benar',
+                        'SALAH' => 'Salah',
+                    ])
+                    ->default('BENAR')
+                    ->required(),
 
                 TextInput::make('sort_order')
                     ->label('Urutan Tampil')

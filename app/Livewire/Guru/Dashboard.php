@@ -6,9 +6,9 @@ use Livewire\Component;
 use App\Models\Sekolah;
 use App\Models\User;
 use App\Models\Video;
-use App\Models\TestAttempt;
 use App\Models\QuestionThread;
 use App\Models\QuestionReply;
+use App\Support\KnowledgeTestSummary;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -51,12 +51,7 @@ class Dashboard extends Component
             ->where('sekolah_id', $this->sekolahId)
             ->where('is_validated', true)->count();
 
-        // rata2 skor berdasarkan attempts siswa di sekolah ini
-        $base = TestAttempt::query()
-            ->whereHas('user', fn($q) => $q->where('sekolah_id', $this->sekolahId));
-
-        $this->avgPre  = (float) round((clone $base)->where('tipe', 'pre')->avg('score') ?: 0, 1);
-        $this->avgPost = (float) round((clone $base)->where('tipe', 'post')->avg('score') ?: 0, 1);
+        $this->refreshScoreSummary();
 
         $this->newThreads = QuestionThread::where('sekolah_id', $this->sekolahId)
             ->where('created_at', '>=', now()->subDays(7))
@@ -192,6 +187,8 @@ class Dashboard extends Component
 
     public function render()
     {
+        $this->refreshScoreSummary();
+
         $this->newThreads = QuestionThread::where('sekolah_id', $this->sekolahId)
             ->where('created_at', '>=', now()->subDays(7))
             ->count();
@@ -208,8 +205,19 @@ class Dashboard extends Component
             ->where('sekolah_id', $this->sekolahId)
             ->where('is_validated', true)
             ->orderBy('name')
-            ->with(['attempts' => fn($q) => $q->latest()->limit(2)]) // cepat
+            ->with(['knowledgeAnswers.question:id,correct_answer']) // cepat
             ->paginate(10, ['*'], 'studentsPage');
+
+        $students->getCollection()->transform(function (User $student) {
+            $pre = KnowledgeTestSummary::summarizeForUser($student, 'pre');
+            $post = KnowledgeTestSummary::summarizeForUser($student, 'post');
+
+            $student->pre_score = $pre['score'] ?? null;
+            $student->post_score = $post['score'] ?? null;
+            $student->last_answered_at = $post['answered_at'] ?? $pre['answered_at'] ?? null;
+
+            return $student;
+        });
 
         // thread sekolah (5 terbaru) + replies
         $threads = QuestionThread::with([
@@ -225,5 +233,34 @@ class Dashboard extends Component
         $videos = Video::latest()->take(8)->get();
 
         return view('livewire.guru.dashboard', compact('students', 'threads', 'videos'));
+    }
+
+    protected function refreshScoreSummary(): void
+    {
+        $students = User::query()
+            ->where('role', 'siswa')
+            ->where('sekolah_id', $this->sekolahId)
+            ->where('is_validated', true)
+            ->with(['knowledgeAnswers.question:id,correct_answer'])
+            ->get();
+
+        $preScores = [];
+        $postScores = [];
+
+        foreach ($students as $student) {
+            $pre = KnowledgeTestSummary::summarizeForUser($student, 'pre');
+            $post = KnowledgeTestSummary::summarizeForUser($student, 'post');
+
+            if ($pre) {
+                $preScores[] = $pre['score'];
+            }
+
+            if ($post) {
+                $postScores[] = $post['score'];
+            }
+        }
+
+        $this->avgPre = round(collect($preScores)->avg() ?? 0, 1);
+        $this->avgPost = round(collect($postScores)->avg() ?? 0, 1);
     }
 }
