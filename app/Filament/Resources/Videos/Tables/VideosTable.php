@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Videos\Tables;
 
 use Filament\Tables\Table;
 use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -47,7 +48,9 @@ class VideosTable
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(fn($record) => view('filament.videos.preview', ['record' => $record])),
 
-                // EditAction::make()->label('Ubah'),
+                EditAction::make()
+                    ->label('Edit')
+                    ->icon('heroicon-o-pencil-square'),
 
                 DeleteAction::make()->label('Hapus'),
             ])            // matikan semua bulk action selain hapus (kalau mau)

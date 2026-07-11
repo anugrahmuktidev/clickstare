@@ -5,6 +5,7 @@ namespace App\Filament\Exports;
 use App\Models\Question;
 use App\Models\Sekolah;
 use App\Models\AttitudeQuestion;
+use App\Models\KnowledgeQuestion;
 use App\Models\TestAttempt;
 use App\Models\User;
 use Filament\Forms\Components\Select;
@@ -126,6 +127,24 @@ class TestAttemptExporter extends Exporter
                 ->state(fn(User $record) => static::resolveAttitudeValue($record, $question->id, 'post'));
         }
 
+        $knowledgeQuestions = KnowledgeQuestion::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($knowledgeQuestions as $index => $question) {
+            $columns[] = ExportColumn::make('pengetahuan_pre_' . ($index + 1))
+                ->label('Pengetahuan Pre ' . ($index + 1))
+                ->state(fn(User $record) => static::resolveKnowledgeValue($record, $question->id, 'pre'));
+        }
+
+        foreach ($knowledgeQuestions as $index => $question) {
+            $columns[] = ExportColumn::make('pengetahuan_post_' . ($index + 1))
+                ->label('Pengetahuan Post ' . ($index + 1))
+                ->state(fn(User $record) => static::resolveKnowledgeValue($record, $question->id, 'post'));
+        }
+
         return $columns;
     }
 
@@ -184,6 +203,7 @@ class TestAttemptExporter extends Exporter
                 'sekolah:id,nama',
                 'attempts.answers' => fn($q) => $q->with('question:id,nomor'),
                 'attitudeAnswers:id,attitude_question_id,user_id,stage,value',
+                'knowledgeAnswers:id,knowledge_question_id,user_id,stage,value',
             ]);
     }
 
@@ -204,6 +224,28 @@ class TestAttemptExporter extends Exporter
         });
 
         return $answer ? (string) $answer->value : '';
+    }
+
+    protected static function resolveKnowledgeValue(User $record, int $questionId, string $stage): string
+    {
+        $answers = $record->relationLoaded('knowledgeAnswers')
+            ? $record->knowledgeAnswers
+            : $record->knowledgeAnswers()->get();
+
+        $answer = $answers->first(function ($ans) use ($questionId, $stage) {
+            return (int) $ans->knowledge_question_id === $questionId
+                && $ans->stage === $stage;
+        });
+
+        if (! $answer) {
+            return '';
+        }
+
+        return match ((string) $answer->value) {
+            'SS', 'S', 'BENAR' => 'Benar',
+            'STS', 'TS', 'SALAH' => 'Salah',
+            default => (string) $answer->value,
+        };
     }
 
     protected static function resolveAttempt(User $record, string $stage): ?TestAttempt

@@ -9,6 +9,7 @@ use Filament\Tables\Table;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
+use App\Filament\Resources\Videos\Pages\EditVideo;
 use App\Filament\Resources\Videos\Pages\ListVideos;
 use App\Filament\Resources\Videos\Schemas\VideoForm;
 use App\Filament\Resources\Videos\Tables\VideosTable;
@@ -47,7 +48,7 @@ class VideoResource extends Resource
         return [
             'index' => ListVideos::route('/'),
             // 'create' => CreateVideo::route('/create'),
-            // 'edit' => EditVideo::route('/{record}/edit'),
+            'edit' => EditVideo::route('/{record}/edit'),
         ];
     }
 }
