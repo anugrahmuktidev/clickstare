@@ -48,7 +48,7 @@
     @else
         <form wire:submit.prevent="submit" class="space-y-5">
             <p class="text-sm text-slate-600">
-                Jawab setiap pertanyaan berikut sesuai dengan kondisi Anda saat ini.
+                Beri ceklis pada jawaban yang sesuai: benar atau salah.
             </p>
 
             @forelse ($questions as $index => $question)
@@ -59,7 +59,7 @@
 
                     <div class="space-y-2">
                         @foreach ($choiceLabels as $code => $label)
-                            <label class="flex items-center gap-3 text-sm text-slate-700">
+                            <label class="flex items-center gap-3 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
                                 <input type="radio"
                                        name="pengetahuan-{{ $question->id }}"
                                        class="h-4 w-4"

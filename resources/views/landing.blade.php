@@ -156,30 +156,40 @@
 
   {{-- 3 FITUR RINGKAS --}}
   <section class="mx-auto max-w-6xl px-4 py-10">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold text-gray-900">Alur Belajar</h2>
+      <p class="mt-1 text-sm text-gray-600">Tiga langkah singkat untuk memahami materi dan melihat hasilnya.</p>
+    </div>
+
     <div class="grid gap-4 sm:gap-6 sm:grid-cols-3">
-      <div class="p-5 bg-white rounded-xl border shadow-sm">
-        <div class="mb-3">
+      <div class="rounded-2xl border bg-white p-5 shadow-sm">
+        <div class="mb-3 flex items-center gap-3">
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-sm font-semibold text-red-600">1</span>
           <lord-icon src="https://cdn.lordicon.com/nobciafz.json" trigger="hover"
-            colors="primary:#dc2626,secondary:#fca5a5" style="width:48px;height:48px"></lord-icon>
+            colors="primary:#dc2626,secondary:#fca5a5" style="width:40px;height:40px"></lord-icon>
         </div>
-        <p class="font-semibold">Pretest</p>
-        <p class="text-sm text-gray-600 mt-1">Cek pemahaman awal tentang bahaya rokok.</p>
+        <p class="font-semibold text-gray-900">Pretest</p>
+        <p class="mt-1 text-sm text-gray-600">Cek pemahaman awal siswa.</p>
       </div>
-      <div class="p-5 bg-white rounded-xl border shadow-sm">
-        <div class="mb-3">
+
+      <div class="rounded-2xl border bg-white p-5 shadow-sm">
+        <div class="mb-3 flex items-center gap-3">
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-sm font-semibold text-red-600">2</span>
           <lord-icon src="https://cdn.lordicon.com/qtqvorle.json" trigger="hover"
-            colors="primary:#dc2626,secondary:#fca5a5" style="width:48px;height:48px"></lord-icon>
+            colors="primary:#dc2626,secondary:#fca5a5" style="width:40px;height:40px"></lord-icon>
         </div>
-        <p class="font-semibold">Video Edukasi</p>
-        <p class="text-sm text-gray-600 mt-1">Materi singkat & mudah dicerna.</p>
+        <p class="font-semibold text-gray-900">Video Edukasi</p>
+        <p class="mt-1 text-sm text-gray-600">Materi singkat yang mudah dipahami.</p>
       </div>
-      <div class="p-5 bg-white rounded-xl border shadow-sm">
-        <div class="mb-3">
+
+      <div class="rounded-2xl border bg-white p-5 shadow-sm">
+        <div class="mb-3 flex items-center gap-3">
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-sm font-semibold text-red-600">3</span>
           <lord-icon src="https://cdn.lordicon.com/hovbgwmd.json" trigger="hover"
-            colors="primary:#dc2626,secondary:#fca5a5" style="width:48px;height:48px"></lord-icon>
+            colors="primary:#dc2626,secondary:#fca5a5" style="width:40px;height:40px"></lord-icon>
         </div>
-        <p class="font-semibold">Posttest</p>
-        <p class="text-sm text-gray-600 mt-1">Nilai peningkatan dan simpulkan.</p>
+        <p class="font-semibold text-gray-900">Posttest</p>
+        <p class="mt-1 text-sm text-gray-600">Lihat peningkatan setelah belajar.</p>
       </div>
     </div>
   </section>

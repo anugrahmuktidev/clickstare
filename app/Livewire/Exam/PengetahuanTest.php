@@ -20,7 +20,7 @@ class PengetahuanTest extends Component
     public $questions;
 
     /**
-     * answers[question_id] = option code (STS/TS/S/SS)
+     * answers[question_id] = option code (BENAR/SALAH)
      */
     public array $answers = [];
 
@@ -30,10 +30,8 @@ class PengetahuanTest extends Component
     public bool $timedOut = false;
 
     public array $choiceLabels = [
-        'STS' => 'Sangat Tidak Setuju (STS)',
-        'TS'  => 'Tidak Setuju (TS)',
-        'S'   => 'Setuju (S)',
-        'SS'  => 'Sangat Setuju (SS)',
+        'BENAR' => 'Benar',
+        'SALAH' => 'Salah',
     ];
 
     public function mount(): void
@@ -78,7 +76,7 @@ class PengetahuanTest extends Component
 
             if ($existing->isNotEmpty()) {
                 foreach ($existing as $questionId => $answer) {
-                    $this->answers[$questionId] = $answer->value;
+                    $this->answers[$questionId] = $this->normalizeAnswerValue($answer->value);
                 }
 
                 if ($existing->count() === $this->questions->count()) {
@@ -216,5 +214,15 @@ class PengetahuanTest extends Component
     public function render()
     {
         return view('livewire.exam.pengetahuan-test');
+    }
+
+    protected function normalizeAnswerValue(?string $value): ?string
+    {
+        return match ($value) {
+            'BENAR', 'SALAH' => $value,
+            'S', 'SS' => 'BENAR',
+            'TS', 'STS' => 'SALAH',
+            default => null,
+        };
     }
 }

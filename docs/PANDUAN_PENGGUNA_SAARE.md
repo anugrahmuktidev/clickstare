@@ -7,10 +7,15 @@ Silakan tambahkan screenshot pada setiap bagian bertanda **[Tempat Screenshot]**
 
 ## 1. Tujuan Aplikasi
 
-SAARe adalah platform edukasi yang membantu:
-- Siswa mengikuti alur belajar dan tes (pretest/posttest)
-- Guru memvalidasi siswa dan memantau progres
-- Admin mengelola konten, akses tes, dan pelaporan
+SAARe adalah platform **Sekolah Anti Asap Rokok Elektrik** yang dirancang untuk membangun lingkungan sekolah lebih sehat melalui edukasi, asesmen, dan pemantauan berkelanjutan.
+
+Tujuan aplikasi secara rinci:
+- Meningkatkan pemahaman siswa tentang risiko rokok elektrik, asapnya, dan dampak kesehatan jangka pendek maupun jangka panjang.
+- Mengukur perubahan pengetahuan siswa secara objektif melalui alur pretest dan posttest.
+- Memetakan sikap siswa terhadap rokok elektrik melalui pertanyaan sikap dan pertanyaan pengetahuan lanjutan.
+- Mendorong perubahan perilaku sehat dengan alur belajar bertahap (tes, edukasi, refleksi, dan evaluasi akhir).
+- Memudahkan guru memvalidasi peserta, memantau progres belajar, dan memberi respons pada forum sekolah.
+- Memudahkan admin mengelola konten edukasi, mengatur akses tes per sekolah, serta menyiapkan data pelaporan hasil belajar.
 
 **[Tempat Screenshot: Halaman Landing/Home]**
 
