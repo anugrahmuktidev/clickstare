@@ -7,7 +7,17 @@ use Illuminate\Support\Facades\Storage;
 
 class Video extends Model
 {
-    protected $fillable = ['judul', 'deskripsi', 'path', 'thumbnail_path', 'is_active', 'is_after_pretest'];
+    protected $fillable = [
+        'judul',
+        'deskripsi',
+        'path',
+        'existing_video_path',
+        'thumbnail_path',
+        'is_active',
+        'is_after_pretest',
+    ];
+
+    protected ?string $pendingPathInput = null;
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -43,6 +53,17 @@ class Video extends Model
                     ->update(['is_active' => false]);
             }
         });
+
+        static::saving(function (Video $video) {
+            if ($video->pendingPathInput) {
+                $video->path = $video->pendingPathInput;
+            }
+        });
+    }
+
+    public function setExistingVideoPathAttribute(?string $value): void
+    {
+        $this->pendingPathInput = static::normalizePathInput($value);
     }
 
     /**
