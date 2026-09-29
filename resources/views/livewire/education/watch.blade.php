@@ -3,7 +3,7 @@
     <h1 class="text-xl font-bold mb-3">{{ $video->judul }}</h1>
 
    <video id="educationVideo" controls class="w-full rounded" preload="metadata" wire:ignore>
-    <source src="{{ $video->video_url }}" type="video/mp4">
+    <source src="{{ $video->video_url }}" type="{{ $video->mime }}">
    </video>
 
 

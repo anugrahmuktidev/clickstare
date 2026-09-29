@@ -99,4 +99,14 @@ class Video extends Model
     {
         return $this->path ? Storage::url($this->path) : null;
     }
+
+    public function getMimeAttribute(): string
+    {
+        return match (strtolower(pathinfo((string) $this->path, PATHINFO_EXTENSION))) {
+            'mov', 'qt' => 'video/quicktime',
+            'webm' => 'video/webm',
+            'ogg', 'ogv' => 'video/ogg',
+            default => 'video/mp4',
+        };
+    }
 }

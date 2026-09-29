@@ -33,7 +33,7 @@ class VideoForm
                 ->disk('public')                 // storage/app/public
                 ->directory('videos')            // isi 'path' jadi 'videos/xxx.mp4'
                 ->visibility('public')
-                ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
+                ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'])
                 ->maxSize(512000)                // 500 MB (satuan KB!)
                 ->preserveFilenames()
                 ->openable()

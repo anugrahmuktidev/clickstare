@@ -3,7 +3,7 @@
 
   @if ($record->path)
     <video controls class="w-full rounded" preload="metadata" style="max-height: 70vh">
-      <source src="{{ Storage::url($record->path) }}" type="video/mp4">
+      <source src="{{ Storage::url($record->path) }}" type="{{ $record->mime }}">
       Browser Anda tidak mendukung pemutar video.
     </video>
     @if ($record->deskripsi)
