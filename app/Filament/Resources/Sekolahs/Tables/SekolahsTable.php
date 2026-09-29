@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Sekolahs\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -19,6 +20,12 @@ class SekolahsTable
                     ->searchable(),
                 TextColumn::make('alamat')
                     ->searchable(),
+                TextColumn::make('classes_count')
+                    ->label('Kelas')
+                    ->counts('classes'),
+                TextColumn::make('exam_sessions_count')
+                    ->label('Sesi')
+                    ->counts('examSessions'),
                 ToggleColumn::make('is_pretest_enabled')
                     ->label('Pretest')
                     ->onColor('success')
@@ -45,6 +52,7 @@ class SekolahsTable
                 EditAction::make(),
             ])
             ->toolbarActions([
+                CreateAction::make(),
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),

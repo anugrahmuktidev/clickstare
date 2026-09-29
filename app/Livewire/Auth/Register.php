@@ -3,6 +3,7 @@
 namespace App\Livewire\Auth;
 
 use App\Models\Sekolah;
+use App\Models\SchoolClass;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +19,7 @@ class Register extends Component
     // field umum
     public ?string $name = null;
     public ?int $sekolah_id = null;
+    public ?int $school_class_id = null;
     public ?string $password = null;
     public ?string $password_confirmation = null;
     public bool $showPassword = false;
@@ -34,6 +36,11 @@ class Register extends Component
     public ?string $pekerjaan_orangtua = null; // siswa
     public ?string $alamat = null; // siswa
 
+    public function updatedSekolahId(): void
+    {
+        $this->school_class_id = null;
+    }
+
     public function register(): void
     {
         // validasi dinamis berdasar role
@@ -47,8 +54,8 @@ class Register extends Component
         if ($this->role === 'siswa') {
             $rules += [
                 'id_number' => ['required', 'regex:/^\d{10,15}$/', 'unique:users,nisn', 'unique:users,username'],
+                'school_class_id' => ['required', 'exists:school_classes,id'],
                 'umur'      => ['nullable', 'integer', 'min:7', 'max:25'],
-                'kelas'     => ['nullable', 'string', 'max:20'],
                 'jenis_kelamin'      => ['required', 'in:laki-laki,perempuan'],
                 'pekerjaan_orangtua' => ['nullable', 'string', 'max:120'],
                 'alamat'             => ['nullable', 'string', 'max:500'],
@@ -63,12 +70,25 @@ class Register extends Component
 
         $data = $this->validate($rules);
 
+        if ($this->role === 'siswa') {
+            $class = SchoolClass::query()
+                ->whereKey($data['school_class_id'])
+                ->where('sekolah_id', $data['sekolah_id'])
+                ->first();
+
+            if (! $class) {
+                $this->addError('school_class_id', 'Kelas tidak tersedia untuk sekolah yang dipilih.');
+                return;
+            }
+        }
+
         // siapkan atribut user
         $attrs = [
             'username'     => $data['id_number'],
             'role'         => $data['role'],
             'name'         => $data['name'],
             'sekolah_id'   => $data['sekolah_id'],
+            'school_class_id' => $this->role === 'siswa' ? $data['school_class_id'] : null,
             'password'     => Hash::make($data['password']),
             'is_validated' => false,          // default menunggu validasi admin
             'validated_at' => null,
@@ -77,7 +97,7 @@ class Register extends Component
         if ($this->role === 'siswa') {
             $attrs['nisn']  = $data['id_number'];
             $attrs['umur']  = $data['umur'] ?? null;
-            $attrs['kelas'] = $data['kelas'] ?? null;
+            $attrs['kelas'] = $class->nama;
             $attrs['jenis_kelamin']      = $data['jenis_kelamin'];
             $attrs['pekerjaan_orangtua'] = $data['pekerjaan_orangtua'] ?? null;
             $attrs['alamat']             = $data['alamat'] ?? null;
@@ -118,6 +138,9 @@ class Register extends Component
     {
         return view('livewire.auth.register', [
             'sekolahs' => Sekolah::orderBy('nama')->get(),
+            'schoolClasses' => $this->sekolah_id
+                ? SchoolClass::where('sekolah_id', $this->sekolah_id)->orderBy('nama')->get()
+                : collect(),
         ]);
     }
 }

@@ -6,6 +6,7 @@ use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 
 class VideoForm
 {
@@ -20,6 +21,12 @@ class VideoForm
             Textarea::make('deskripsi')
                 ->label('Deskripsi')
                 ->rows(3),
+
+            Toggle::make('is_after_pretest')
+                ->label('Tampilkan khusus setelah pretest')
+                ->helperText('Video ini akan diarahkan otomatis setelah siswa menyelesaikan pretest. Posttest baru terbuka setelah video selesai ditonton.')
+                ->default(false)
+                ->inline(false),
 
             FileUpload::make('path')
                 ->label('File Video')

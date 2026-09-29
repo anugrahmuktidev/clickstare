@@ -18,4 +18,19 @@ class Sekolah extends Model
         'is_pretest_enabled' => 'boolean',
         'is_posttest_enabled' => 'boolean',
     ];
+
+    public function classes()
+    {
+        return $this->hasMany(SchoolClass::class);
+    }
+
+    public function examSessions()
+    {
+        return $this->hasMany(ExamSession::class);
+    }
+
+    public function activeExamSessions()
+    {
+        return $this->examSessions()->where('is_active', true);
+    }
 }

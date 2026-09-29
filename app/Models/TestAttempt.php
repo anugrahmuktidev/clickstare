@@ -10,6 +10,7 @@ class TestAttempt extends Model
 {
     protected $fillable = [
         'user_id',
+        'exam_session_id',
         'tipe',
         'total_soal',
         'total_benar',
@@ -19,6 +20,10 @@ class TestAttempt extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function examSession()
+    {
+        return $this->belongsTo(ExamSession::class);
     }
     public function answers()
     {

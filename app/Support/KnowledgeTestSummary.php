@@ -8,15 +8,20 @@ use Illuminate\Support\Carbon;
 
 class KnowledgeTestSummary
 {
-    public static function summarizeForUser(User $user, string $stage): ?array
+    public static function summarizeForUser(User $user, string $stage, ?int $examSessionId = null): ?array
     {
         $answers = $user->relationLoaded('knowledgeAnswers')
             ? $user->knowledgeAnswers->where('stage', $stage)->values()
             : KnowledgeAnswer::query()
                 ->where('user_id', $user->id)
                 ->where('stage', $stage)
+                ->when($examSessionId, fn ($query) => $query->where('exam_session_id', $examSessionId))
                 ->with('question:id,correct_answer')
                 ->get();
+
+        if ($user->relationLoaded('knowledgeAnswers') && $examSessionId) {
+            $answers = $answers->where('exam_session_id', $examSessionId)->values();
+        }
 
         if ($answers->isEmpty()) {
             return null;
@@ -50,15 +55,20 @@ class KnowledgeTestSummary
         ];
     }
 
-    public static function answerBySortOrder(User $user, string $stage, int $sortOrder): string
+    public static function answerBySortOrder(User $user, string $stage, int $sortOrder, ?int $examSessionId = null): string
     {
         $answers = $user->relationLoaded('knowledgeAnswers')
             ? $user->knowledgeAnswers->where('stage', $stage)->values()
             : KnowledgeAnswer::query()
                 ->where('user_id', $user->id)
                 ->where('stage', $stage)
+                ->when($examSessionId, fn ($query) => $query->where('exam_session_id', $examSessionId))
                 ->with('question:id,sort_order')
                 ->get();
+
+        if ($user->relationLoaded('knowledgeAnswers') && $examSessionId) {
+            $answers = $answers->where('exam_session_id', $examSessionId)->values();
+        }
 
         $answers->loadMissing('question:id,sort_order');
 

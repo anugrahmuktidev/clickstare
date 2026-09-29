@@ -27,10 +27,17 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('attitude_answers', function (Blueprint $table) {
-            $table->dropUnique('attitude_answers_attitude_question_id_user_id_unique');
-            $table->unique(['attitude_question_id', 'user_id', 'stage'], 'attitude_answers_question_user_stage_unique');
-        });
+        if ($this->indexExists('attitude_answers', 'attitude_answers_attitude_question_id_user_id_unique')) {
+            Schema::table('attitude_answers', function (Blueprint $table) {
+                $table->dropUnique('attitude_answers_attitude_question_id_user_id_unique');
+            });
+        }
+
+        if (! $this->indexExists('attitude_answers', 'attitude_answers_question_user_stage_unique')) {
+            Schema::table('attitude_answers', function (Blueprint $table) {
+                $table->unique(['attitude_question_id', 'user_id', 'stage'], 'attitude_answers_question_user_stage_unique');
+            });
+        }
     }
 
     /**
@@ -53,10 +60,17 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('attitude_answers', function (Blueprint $table) {
-            $table->dropUnique('attitude_answers_question_user_stage_unique');
-            $table->unique(['attitude_question_id', 'user_id'], 'attitude_answers_attitude_question_id_user_id_unique');
-        });
+        if ($this->indexExists('attitude_answers', 'attitude_answers_question_user_stage_unique')) {
+            Schema::table('attitude_answers', function (Blueprint $table) {
+                $table->dropUnique('attitude_answers_question_user_stage_unique');
+            });
+        }
+
+        if (! $this->indexExists('attitude_answers', 'attitude_answers_attitude_question_id_user_id_unique')) {
+            Schema::table('attitude_answers', function (Blueprint $table) {
+                $table->unique(['attitude_question_id', 'user_id'], 'attitude_answers_attitude_question_id_user_id_unique');
+            });
+        }
     }
     protected function isMysql(): bool
     {
@@ -85,5 +99,26 @@ return new class extends Migration
         if (! empty($exists)) {
             DB::statement("ALTER TABLE `{$table}` DROP INDEX `{$index}`");
         }
+    }
+
+    protected function indexExists(string $table, string $index): bool
+    {
+        if ($this->isMysql()) {
+            return ! empty(DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$index]));
+        }
+
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            $indexes = DB::select("PRAGMA index_list('{$table}')");
+
+            foreach ($indexes as $row) {
+                if (($row->name ?? null) === $index) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return false;
     }
 };

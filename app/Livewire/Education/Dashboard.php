@@ -3,6 +3,7 @@
 namespace App\Livewire\Education;
 
 use App\Models\Faq;
+use App\Models\ExamParticipation;
 use App\Models\Video;
 use App\Support\KnowledgeTestSummary;
 use Livewire\Component;
@@ -25,6 +26,36 @@ class Dashboard extends Component
     public array $reply = []; // reply[thread_id] = teks
 
     public ?string $isi = null;   // ← cukup 1 field
+    public ?int $selected_exam_session_id = null;
+
+    public function mount(): void
+    {
+        $this->selected_exam_session_id = session('active_exam_session_id');
+    }
+
+    public function selectExamSession(): void
+    {
+        $user = Auth::user();
+
+        $data = $this->validate([
+            'selected_exam_session_id' => ['required', 'exists:exam_sessions,id'],
+        ], [], [
+            'selected_exam_session_id' => 'sesi test',
+        ]);
+
+        $session = $user->sekolah?->activeExamSessions()
+            ->whereKey($data['selected_exam_session_id'])
+            ->first();
+
+        if (! $session) {
+            $this->addError('selected_exam_session_id', 'Sesi test tidak aktif untuk sekolah Anda.');
+            return;
+        }
+
+        session(['active_exam_session_id' => $session->id]);
+        $this->selected_exam_session_id = $session->id;
+        session()->flash('ok', 'Sesi test aktif: ' . $session->nama);
+    }
 
     public function ask(): void
     {
@@ -136,7 +167,7 @@ class Dashboard extends Component
     {
         $user = Auth::user();
 
-        $videos  = Video::latest()->take(20)->get(); // tampilkan 20 terbaru
+        $videosQuery = Video::query()->latest();
         $faqs    = Faq::orderBy('id')->get();
         $threads = QuestionThread::with(['asker', 'replies.user', 'solution'])
             ->where('sekolah_id', $user->sekolah_id)
@@ -148,17 +179,54 @@ class Dashboard extends Component
         $pretestAttempt = null;
         $posttestAttempt = null;
         $canWatchEducationVideo = true;
+        $activeExamSessions = collect();
+        $selectedExamSession = null;
+        $selectedParticipation = null;
 
         if ($user->isSiswa()) {
-            $pretestAttempt = KnowledgeTestSummary::summarizeForUser($user, 'pre');
-            $posttestAttempt = KnowledgeTestSummary::summarizeForUser($user, 'post');
+            $activeExamSessions = $user->sekolah?->activeExamSessions()->orderBy('nama')->get() ?? collect();
+            $selectedExamSession = $activeExamSessions->firstWhere('id', (int) $this->selected_exam_session_id);
+
+            if (! $selectedExamSession && $activeExamSessions->count() === 1) {
+                $selectedExamSession = $activeExamSessions->first();
+                $this->selected_exam_session_id = $selectedExamSession->id;
+                session(['active_exam_session_id' => $selectedExamSession->id]);
+            }
+
+            if ($selectedExamSession) {
+                $selectedParticipation = ExamParticipation::query()
+                    ->where('user_id', $user->id)
+                    ->where('exam_session_id', $selectedExamSession->id)
+                    ->first();
+            }
+
+            if ($selectedParticipation?->pretest_completed_at && ! $selectedParticipation?->video_watched_at) {
+                $requiredVideoIds = Video::query()
+                    ->where('is_after_pretest', true)
+                    ->pluck('id');
+
+                if ($requiredVideoIds->isNotEmpty()) {
+                    $videosQuery->whereIn('id', $requiredVideoIds);
+                }
+            }
+
+            $pretestAttempt = $selectedParticipation?->pretest_completed_at
+                ? KnowledgeTestSummary::summarizeForUser($user, 'pre', $selectedExamSession?->id)
+                : null;
+            $posttestAttempt = $selectedParticipation?->posttest_completed_at
+                ? KnowledgeTestSummary::summarizeForUser($user, 'post', $selectedExamSession?->id)
+                : null;
 
             $pretestAttempt = $pretestAttempt ? (object) $pretestAttempt : null;
             $posttestAttempt = $posttestAttempt ? (object) $posttestAttempt : null;
 
-            $showPretestButton = (bool) ($user->sekolah?->is_pretest_enabled ?? false) && $pretestAttempt === null;
+            $showPretestButton = $selectedExamSession !== null
+                && (bool) ($user->sekolah?->is_pretest_enabled ?? false)
+                && $pretestAttempt === null;
             $showPosttestButton = (bool) ($user->sekolah?->is_posttest_enabled ?? false)
+                && $selectedExamSession !== null
                 && $pretestAttempt !== null
+                && $selectedParticipation?->video_watched_at !== null
                 && $posttestAttempt === null;
 
             $canWatchEducationVideo = $pretestAttempt !== null;
@@ -167,6 +235,8 @@ class Dashboard extends Component
                 $certificateAttempt = $posttestAttempt;
             }
         }
+
+        $videos = $videosQuery->take(20)->get(); // tampilkan 20 terbaru
 
         return view('livewire.education.dashboard', [
             'videos' => $videos,
@@ -178,6 +248,8 @@ class Dashboard extends Component
             'pretestAttempt' => $pretestAttempt,
             'posttestAttempt' => $posttestAttempt,
             'canWatchEducationVideo' => $canWatchEducationVideo,
+            'activeExamSessions' => $activeExamSessions,
+            'selectedExamSession' => $selectedExamSession,
         ]);
     }
 }

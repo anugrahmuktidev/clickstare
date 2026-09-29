@@ -11,6 +11,7 @@ class ExamParticipation extends Model
 
     protected $fillable = [
         'user_id',
+        'exam_session_id',
         'current_step',
         'pocket_money_range',
         'uses_electric_smoke',
@@ -41,5 +42,10 @@ class ExamParticipation extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function examSession()
+    {
+        return $this->belongsTo(ExamSession::class);
     }
 }

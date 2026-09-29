@@ -90,12 +90,15 @@ class TestAttemptsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
-                // gunakan kolom link di atas sebagai akses detail
+                //
             ])
+            ->recordUrl(fn ($record) => TestAttemptResource::getUrl('edit', ['record' => $record]))
             ->toolbarActions([
                 ExportAction::make()
                     ->exporter(TestAttemptExporter::class)
                     ->label('Export Excel')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
                     ->formats([ExportFormat::Xlsx])
                     ->fileName(fn () => 'hasil-tes-' . now()->format('Ymd-His'))
                     ->authGuard('web')
@@ -113,6 +116,22 @@ class TestAttemptsTable
                         if (! empty($options['sekolah_id'])) {
                             $query->where('sekolah_id', $options['sekolah_id']);
                         }
+
+                        if (! empty($options['school_class_id'])) {
+                            $query->where('school_class_id', $options['school_class_id']);
+                        }
+
+                        if (! empty($options['exam_session_id'])) {
+                            $sessionId = (int) $options['exam_session_id'];
+
+                            $query->where(function ($query) use ($sessionId) {
+                                $query
+                                    ->whereHas('examParticipations', fn ($query) => $query->where('exam_session_id', $sessionId))
+                                    ->orWhereHas('knowledgeAnswers', fn ($query) => $query->where('exam_session_id', $sessionId))
+                                    ->orWhereHas('attitudeAnswers', fn ($query) => $query->where('exam_session_id', $sessionId));
+                            });
+                        }
+
                         $jenis = $options['test_type'] ?? 'all';
                         if ($jenis !== 'all') {
                             $query->whereHas('attempts', function ($q) use ($jenis) {

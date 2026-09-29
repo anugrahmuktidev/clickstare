@@ -12,6 +12,7 @@ class KnowledgeAnswer extends Model
     protected $fillable = [
         'knowledge_question_id',
         'user_id',
+        'exam_session_id',
         'stage',
         'value',
     ];
@@ -24,5 +25,10 @@ class KnowledgeAnswer extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function examSession()
+    {
+        return $this->belongsTo(ExamSession::class);
     }
 }

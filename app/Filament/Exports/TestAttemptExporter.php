@@ -4,7 +4,9 @@ namespace App\Filament\Exports;
 
 use App\Models\Sekolah;
 use App\Models\AttitudeQuestion;
+use App\Models\ExamSession;
 use App\Models\KnowledgeQuestion;
+use App\Models\SchoolClass;
 use App\Models\User;
 use App\Support\KnowledgeTestSummary;
 use Filament\Forms\Components\Select;
@@ -13,10 +15,24 @@ use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use OpenSpout\Common\Entity\Style\Border;
+use OpenSpout\Common\Entity\Style\BorderPart;
+use OpenSpout\Common\Entity\Style\CellAlignment;
+use OpenSpout\Common\Entity\Style\CellVerticalAlignment;
+use OpenSpout\Common\Entity\Style\Color;
+use OpenSpout\Common\Entity\Style\Style;
 
 class TestAttemptExporter extends Exporter
 {
     protected static ?string $model = User::class;
+    protected static array $currentOptions = [];
+
+    public function __invoke(\Illuminate\Database\Eloquent\Model $record): array
+    {
+        static::$currentOptions = $this->options;
+
+        return parent::__invoke($record);
+    }
 
     public function getJobQueue(): ?string
     {
@@ -28,6 +44,38 @@ class TestAttemptExporter extends Exporter
         return 'sync';
     }
 
+    public function getXlsxHeaderCellStyle(): ?Style
+    {
+        return (new Style())
+            ->setFontBold()
+            ->setFontSize(12)
+            ->setFontColor(Color::WHITE)
+            ->setBackgroundColor(Color::rgb(21, 128, 61))
+            ->setShouldWrapText()
+            ->setCellAlignment(CellAlignment::CENTER)
+            ->setCellVerticalAlignment(CellVerticalAlignment::CENTER)
+            ->setBorder(static::makeBorder(Color::rgb(20, 83, 45), Border::WIDTH_MEDIUM));
+    }
+
+    public function getXlsxCellStyle(): ?Style
+    {
+        return (new Style())
+            ->setFontColor(Color::rgb(17, 24, 39))
+            ->setShouldWrapText()
+            ->setCellVerticalAlignment(CellVerticalAlignment::CENTER)
+            ->setBorder(static::makeBorder(Color::rgb(203, 213, 225), Border::WIDTH_THIN));
+    }
+
+    protected static function makeBorder(string $color, string $width): Border
+    {
+        return new Border(
+            new BorderPart(Border::LEFT, $color, $width),
+            new BorderPart(Border::RIGHT, $color, $width),
+            new BorderPart(Border::TOP, $color, $width),
+            new BorderPart(Border::BOTTOM, $color, $width),
+        );
+    }
+
     public static function getColumns(): array
     {
         $columns = [
@@ -37,6 +85,9 @@ class TestAttemptExporter extends Exporter
             ExportColumn::make('sekolah')
                 ->label('Sekolah')
                 ->state(fn(User $record) => $record->sekolah->nama ?? ''),
+            ExportColumn::make('sesi')
+                ->label('Sesi Test')
+                ->state(fn(User $record) => static::resolveExamSessionName($record)),
             ExportColumn::make('nomor_hp')
                 ->label('Nomor HP')
                 ->state(fn(User $record) => (string) ($record->nisn ?? '')),
@@ -132,7 +183,38 @@ class TestAttemptExporter extends Exporter
                 ->options(fn() => Sekolah::orderBy('nama')->pluck('nama', 'id')->all())
                 ->searchable()
                 ->preload()
-                ->placeholder('Semua'),
+                ->live()
+                ->placeholder('Semua')
+                ->afterStateUpdated(function (callable $set): void {
+                    $set('school_class_id', null);
+                    $set('exam_session_id', null);
+                }),
+            Select::make('school_class_id')
+                ->label('Kelas')
+                ->options(fn(callable $get) => filled($get('sekolah_id'))
+                    ? SchoolClass::query()
+                        ->where('sekolah_id', $get('sekolah_id'))
+                        ->orderBy('nama')
+                        ->pluck('nama', 'id')
+                        ->all()
+                    : [])
+                ->searchable()
+                ->preload()
+                ->live()
+                ->placeholder('Semua kelas')
+                ->afterStateUpdated(fn(callable $set) => $set('exam_session_id', null)),
+            Select::make('exam_session_id')
+                ->label('Sesi Test')
+                ->options(fn(callable $get) => filled($get('sekolah_id'))
+                    ? ExamSession::query()
+                        ->where('sekolah_id', $get('sekolah_id'))
+                        ->orderBy('nama')
+                        ->pluck('nama', 'id')
+                        ->all()
+                    : [])
+                ->searchable()
+                ->preload()
+                ->placeholder('Semua sesi'),
         ];
     }
 
@@ -175,9 +257,11 @@ class TestAttemptExporter extends Exporter
             })
             ->with([
                 'sekolah:id,nama',
-                'examParticipation:user_id,pocket_money_range,uses_electric_smoke,uses_conventional_smoke,uses_both_smoke_types',
-                'attitudeAnswers:id,attitude_question_id,user_id,stage,value',
-                'knowledgeAnswers:id,knowledge_question_id,user_id,stage,value',
+                'schoolClass:id,nama',
+                'examParticipations:id,user_id,exam_session_id,pocket_money_range,uses_electric_smoke,uses_conventional_smoke,uses_both_smoke_types,updated_at',
+                'examParticipations.examSession:id,nama',
+                'attitudeAnswers:id,attitude_question_id,user_id,exam_session_id,stage,value',
+                'knowledgeAnswers:id,knowledge_question_id,user_id,exam_session_id,stage,value',
                 'knowledgeAnswers.question:id,sort_order,correct_answer',
             ]);
     }
@@ -189,13 +273,15 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveAttitudeValue(User $record, int $questionId, string $stage): string
     {
+        $examSessionId = static::currentExamSessionId($record);
         $answers = $record->relationLoaded('attitudeAnswers')
             ? $record->attitudeAnswers
             : $record->attitudeAnswers()->get();
 
-        $answer = $answers->first(function ($ans) use ($questionId, $stage) {
+        $answer = $answers->first(function ($ans) use ($questionId, $stage, $examSessionId) {
             return (int) $ans->attitude_question_id === $questionId
-                && $ans->stage === $stage;
+                && $ans->stage === $stage
+                && (! $examSessionId || (int) $ans->exam_session_id === $examSessionId);
         });
 
         return $answer ? (string) $answer->value : '';
@@ -203,13 +289,15 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveKnowledgeValue(User $record, int $questionId, string $stage): string
     {
+        $examSessionId = static::currentExamSessionId($record);
         $answers = $record->relationLoaded('knowledgeAnswers')
             ? $record->knowledgeAnswers
             : $record->knowledgeAnswers()->get();
 
-        $answer = $answers->first(function ($ans) use ($questionId, $stage) {
+        $answer = $answers->first(function ($ans) use ($questionId, $stage, $examSessionId) {
             return (int) $ans->knowledge_question_id === $questionId
-                && $ans->stage === $stage;
+                && $ans->stage === $stage
+                && (! $examSessionId || (int) $ans->exam_session_id === $examSessionId);
         });
 
         if (! $answer) {
@@ -225,7 +313,7 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveScore(User $record, string $stage): string
     {
-        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage);
+        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage, static::currentExamSessionId($record));
         if (! $summary) {
             return '';
         }
@@ -235,7 +323,7 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveTotalBenar(User $record, string $stage): string
     {
-        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage);
+        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage, static::currentExamSessionId($record));
         if (! $summary) {
             return '';
         }
@@ -245,7 +333,7 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveTotalSoal(User $record, string $stage): string
     {
-        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage);
+        $summary = KnowledgeTestSummary::summarizeForUser($record, $stage, static::currentExamSessionId($record));
         if (! $summary) {
             return '';
         }
@@ -255,7 +343,7 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolvePocketMoneyRange(User $record): string
     {
-        $value = $record->examParticipation?->pocket_money_range;
+        $value = static::currentParticipation($record)?->pocket_money_range;
 
         return match ($value) {
             '5000-10000' => '5.000 - 10.000',
@@ -268,12 +356,41 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveParticipationYesNo(User $record, string $field): string
     {
-        $value = $record->examParticipation?->{$field};
+        $value = static::currentParticipation($record)?->{$field};
 
         return match ($value) {
             true => 'Ya',
             false => 'Tidak',
             default => '',
         };
+    }
+
+    protected static function resolveExamSessionName(User $record): string
+    {
+        return static::currentParticipation($record)?->examSession?->nama ?? '';
+    }
+
+    protected static function currentExamSessionId(User $record): ?int
+    {
+        return static::currentParticipation($record)?->exam_session_id
+            ? (int) static::currentParticipation($record)->exam_session_id
+            : null;
+    }
+
+    protected static function currentParticipation(User $record)
+    {
+        if (! $record->relationLoaded('examParticipations')) {
+            return $record->examParticipation;
+        }
+
+        $optionSessionId = static::$currentOptions['exam_session_id'] ?? null;
+
+        if ($optionSessionId) {
+            return $record->examParticipations->firstWhere('exam_session_id', (int) $optionSessionId);
+        }
+
+        return $record->examParticipations
+            ->sortByDesc(fn($participation) => $participation->updated_at?->timestamp ?? 0)
+            ->first();
     }
 }

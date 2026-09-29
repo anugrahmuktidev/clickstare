@@ -25,7 +25,10 @@ class Pretest extends Component
     public function mount(): void
     {
         $participation = ExamParticipation::firstOrCreate(
-            ['user_id' => Auth::id()],
+            [
+                'user_id' => Auth::id(),
+                'exam_session_id' => session('active_exam_session_id'),
+            ],
             ['current_step' => 'pretest']
         );
 
@@ -54,7 +57,9 @@ class Pretest extends Component
             'uses_both_smoke_types' => 'merokok elektrik dan konvensional/tembakau',
         ]);
 
-        $participation = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
+        $participation = ExamParticipation::where('user_id', Auth::id())
+            ->where('exam_session_id', session('active_exam_session_id'))
+            ->firstOrFail();
         $participation->update([
             'pocket_money_range' => $data['pocket_money_range'],
             'uses_electric_smoke' => $data['uses_electric_smoke'] === 'ya',

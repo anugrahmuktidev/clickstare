@@ -5,6 +5,7 @@ namespace App\Livewire\Exam;
 use App\Models\AttitudeAnswer;
 use App\Models\AttitudeQuestion;
 use App\Models\ExamParticipation;
+use App\Models\Video;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -39,7 +40,10 @@ class Sikap extends Component
         $this->phase = $routeName === 'exam.sikap_post' ? 'post' : 'pre';
 
         $p = ExamParticipation::firstOrCreate(
-            ['user_id' => Auth::id()],
+            [
+                'user_id' => Auth::id(),
+                'exam_session_id' => session('active_exam_session_id'),
+            ],
             ['current_step' => 'pretest']
         );
 
@@ -63,11 +67,13 @@ class Sikap extends Component
         }
 
         $userId = Auth::id();
+        $examSessionId = (int) session('active_exam_session_id');
         $questionIds = $this->questions->pluck('id');
 
         if ($questionIds->isNotEmpty()) {
             $existing = AttitudeAnswer::query()
                 ->where('user_id', $userId)
+                ->where('exam_session_id', $examSessionId)
                 ->where('stage', $this->phase)
                 ->whereIn('attitude_question_id', $questionIds)
                 ->get()
@@ -117,6 +123,7 @@ class Sikap extends Component
         }
 
         $userId = Auth::id();
+        $examSessionId = (int) session('active_exam_session_id');
         $questionIds = $this->questions->pluck('id')->all();
         $now = now();
 
@@ -125,6 +132,7 @@ class Sikap extends Component
             $rows[] = [
                 'attitude_question_id' => $question->id,
                 'user_id'              => $userId,
+                'exam_session_id'      => $examSessionId,
                 'stage'                => $this->phase,
                 'value'                => $this->answers[$question->id],
                 'created_at'           => $now,
@@ -132,9 +140,10 @@ class Sikap extends Component
             ];
         }
 
-        DB::transaction(function () use ($rows, $userId, $questionIds) {
+        DB::transaction(function () use ($rows, $userId, $examSessionId, $questionIds) {
             AttitudeAnswer::query()
                 ->where('user_id', $userId)
+                ->where('exam_session_id', $examSessionId)
                 ->where('stage', $this->phase)
                 ->whereIn('attitude_question_id', $questionIds)
                 ->delete();
@@ -152,7 +161,9 @@ class Sikap extends Component
             return;
         }
 
-        $p = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
+        $p = ExamParticipation::where('user_id', Auth::id())
+            ->where('exam_session_id', session('active_exam_session_id'))
+            ->firstOrFail();
 
         if ($this->phase === 'post') {
             $p->update([
@@ -171,6 +182,17 @@ class Sikap extends Component
             'pretest_completed_at' => now(),
             'current_step'         => 'posttest',
         ]);
+
+        $afterPretestVideo = Video::query()
+            ->where('is_after_pretest', true)
+            ->latest('id')
+            ->first();
+
+        if ($afterPretestVideo) {
+            session()->flash('success', 'Pretest selesai. Silakan tonton video edukasi sampai selesai sebelum posttest.');
+            $this->redirectRoute('education.watch', $afterPretestVideo, navigate: true);
+            return;
+        }
 
         session()->flash('success', 'Pretest selesai. Video edukasi sudah terbuka.');
 

@@ -28,7 +28,7 @@
     {{-- Umum --}}
     <label class="block">
       <span class="text-sm">Sekolah</span>
-      <select wire:model="sekolah_id" class="mt-1 w-full border rounded p-2">
+      <select wire:model.live="sekolah_id" class="mt-1 w-full border rounded p-2">
         <option value="">Pilih Sekolah</option>
         @foreach($sekolahs as $sk)
           <option value="{{ $sk->id }}">{{ $sk->nama }}</option>
@@ -47,8 +47,13 @@
         </label>
         <label class="block">
           <span class="text-sm">Kelas</span>
-          <input type="text" wire:model="kelas" class="mt-1 w-full border rounded p-2">
-          @error('kelas') <div class="text-red-600 text-sm">{{ $message }}</div> @enderror
+          <select wire:model="school_class_id" class="mt-1 w-full border rounded p-2" @disabled(! $sekolah_id)>
+            <option value="">Pilih Kelas</option>
+            @foreach($schoolClasses as $class)
+              <option value="{{ $class->id }}">{{ $class->nama }}</option>
+            @endforeach
+          </select>
+          @error('school_class_id') <div class="text-red-600 text-sm">{{ $message }}</div> @enderror
         </label>
       </div>
 

@@ -25,6 +25,7 @@ class User extends Authenticatable
         'username',
         'role',
         'sekolah_id',
+        'school_class_id',
         'name',
         'nisn',
         'nip',
@@ -64,6 +65,11 @@ class User extends Authenticatable
         return $this->belongsTo(Sekolah::class);
     }
 
+    public function schoolClass()
+    {
+        return $this->belongsTo(SchoolClass::class);
+    }
+
     public function attempts()
     {
         return $this->hasMany(TestAttempt::class);
@@ -87,6 +93,11 @@ class User extends Authenticatable
     public function examParticipation()
     {
         return $this->hasOne(ExamParticipation::class);
+    }
+
+    public function examParticipations()
+    {
+        return $this->hasMany(ExamParticipation::class);
     }
 
     /* ===========================

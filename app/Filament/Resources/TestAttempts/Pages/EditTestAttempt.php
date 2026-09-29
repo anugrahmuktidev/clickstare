@@ -16,4 +16,14 @@ class EditTestAttempt extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $totalSoal = (int) ($this->record->total_soal ?? 0);
+        $totalBenar = (int) ($data['total_benar'] ?? 0);
+
+        $data['score'] = $totalSoal > 0 ? (int) round(($totalBenar / $totalSoal) * 100) : 0;
+
+        return $data;
+    }
 }

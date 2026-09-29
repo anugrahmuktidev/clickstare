@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\ExamParticipation;
+use App\Models\ExamSession;
 // app/Http/Middleware/EnsureExamStep.php
 class EnsureExamStep
 {
@@ -23,10 +24,30 @@ class EnsureExamStep
             abort(403, 'Posttest untuk sekolah Anda sedang ditutup oleh admin.');
         }
 
+        $sessionId = (int) $request->session()->get('active_exam_session_id');
+        $examSession = ExamSession::query()
+            ->whereKey($sessionId)
+            ->where('sekolah_id', $user->sekolah_id)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $examSession) {
+            return redirect()->route('education.index')
+                ->with('error', 'Pilih sesi test aktif terlebih dahulu.');
+        }
+
         $p = ExamParticipation::firstOrCreate(
-            ['user_id' => $user->id],
+            [
+                'user_id' => $user->id,
+                'exam_session_id' => $examSession->id,
+            ],
             ['current_step' => 'pretest']
         );
+
+        if (in_array($requiredStep, $posttestSteps, true) && ! $p->video_watched_at) {
+            return redirect()->route('education.index')
+                ->with('error', 'Tonton video edukasi sampai selesai sebelum melanjutkan ke posttest.');
+        }
 
         $order = [
             'pretest'               => 1,

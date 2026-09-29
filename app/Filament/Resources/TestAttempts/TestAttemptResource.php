@@ -47,7 +47,7 @@ class TestAttemptResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\TestAttempts\RelationManagers\AnswersRelationManager::class,
+            //
         ];
     }
 
@@ -57,7 +57,7 @@ class TestAttemptResource extends Resource
             'index' => ListTestAttempts::route('/'),
             'view' => Pages\ViewTestAttempt::route('/{record}'),
             // 'create' => CreateTestAttempt::route('/create'),
-            // 'edit' => EditTestAttempt::route('/{record}/edit'),
+            'edit' => EditTestAttempt::route('/{record}/edit'),
         ];
     }
 }

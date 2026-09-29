@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
 
 
 class VideosTable
@@ -25,6 +26,10 @@ class VideosTable
                     ->label('File')
                     ->wrap()
                     ->formatStateUsing(fn($state) => $state ? '/storage/' . $state : '—'),
+
+                IconColumn::make('is_after_pretest')
+                    ->label('Setelah Pretest')
+                    ->boolean(),
 
                 // Kolom URL khusus siswa — bisa di-copy
                 TextColumn::make('student_url')

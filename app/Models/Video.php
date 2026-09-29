@@ -7,10 +7,11 @@ use Illuminate\Support\Facades\Storage;
 
 class Video extends Model
 {
-    protected $fillable = ['judul', 'deskripsi', 'path', 'thumbnail_path', 'is_active'];
+    protected $fillable = ['judul', 'deskripsi', 'path', 'thumbnail_path', 'is_active', 'is_after_pretest'];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_after_pretest' => 'boolean',
     ];
 
     protected static function booted()

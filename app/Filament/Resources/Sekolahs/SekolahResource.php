@@ -46,8 +46,8 @@ class SekolahResource extends Resource
     {
         return [
             'index' => ListSekolahs::route('/'),
-            // 'create' => CreateSekolah::route('/create'),
-            // 'edit' => EditSekolah::route('/{record}/edit'),
+            'create' => CreateSekolah::route('/create'),
+            'edit' => EditSekolah::route('/{record}/edit'),
         ];
     }
 }

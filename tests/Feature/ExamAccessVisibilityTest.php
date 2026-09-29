@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ExamSession;
 use App\Models\Sekolah;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -54,8 +55,14 @@ class ExamAccessVisibilityTest extends TestCase
         ]);
 
         $student = $this->makeValidatedStudent($sekolah->id, '2000000003');
+        $session = ExamSession::create([
+            'sekolah_id' => $sekolah->id,
+            'nama' => 'Sesi 1',
+            'is_active' => true,
+        ]);
 
         $this->actingAs($student)
+            ->withSession(['active_exam_session_id' => $session->id])
             ->get(route('exam.pretest'))
             ->assertOk();
     }

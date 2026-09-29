@@ -34,6 +34,36 @@
   @endif
 
   @if (auth()->user()->isSiswa())
+    <section class="bg-white shadow rounded-lg p-4 sm:p-6">
+      <h2 class="font-bold text-base sm:text-lg mb-3">Sesi Test</h2>
+
+      @if ($activeExamSessions->isNotEmpty())
+        <form wire:submit.prevent="selectExamSession" class="flex flex-col sm:flex-row gap-3 sm:items-end">
+          <label class="block flex-1">
+            <span class="text-sm text-gray-700">Pilih sesi aktif</span>
+            <select wire:model="selected_exam_session_id" class="mt-1 w-full border rounded p-2">
+              <option value="">Pilih Sesi</option>
+              @foreach ($activeExamSessions as $session)
+                <option value="{{ $session->id }}">{{ $session->nama }}</option>
+              @endforeach
+            </select>
+            @error('selected_exam_session_id') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
+          </label>
+          <button class="px-4 py-2 rounded bg-gray-900 hover:bg-black text-white text-sm font-semibold">
+            Gunakan Sesi
+          </button>
+        </form>
+
+        @if ($selectedExamSession)
+          <p class="text-xs text-emerald-700 mt-2">Sesi aktif saat ini: <strong>{{ $selectedExamSession->nama }}</strong></p>
+        @endif
+      @else
+        <p class="text-sm text-gray-600">Belum ada sesi test aktif untuk sekolah Anda.</p>
+      @endif
+    </section>
+  @endif
+
+  @if (auth()->user()->isSiswa())
     @php
       $preScore = $pretestAttempt ? (int) $pretestAttempt->score : null;
       $postScore = $posttestAttempt ? (int) $posttestAttempt->score : null;
@@ -199,11 +229,11 @@
         @if (! $showPretestButton || ! $showPosttestButton)
           <p class="text-xs text-gray-500 mt-3">
             @if (! $pretestAttempt && ! $showPretestButton && ! $showPosttestButton)
-              Pretest dan posttest belum dibuka oleh admin atau guru.
+              Pilih sesi test aktif terlebih dahulu, atau pretest dan posttest belum dibuka oleh admin/guru.
             @elseif (! $showPretestButton && ! $pretestAttempt)
               Pretest belum dibuka oleh admin atau guru.
             @elseif ($pretestAttempt && ! $showPosttestButton && ! $posttestAttempt)
-              Posttest belum dibuka oleh admin atau guru.
+              Tonton video edukasi terlebih dahulu, atau posttest belum dibuka oleh admin/guru.
             @elseif ($pretestAttempt)
               Pretest sudah selesai. Video edukasi sudah dapat diakses.
             @endif
@@ -214,9 +244,9 @@
           @if ($posttestAttempt)
             Pretest dan posttest sudah selesai dikerjakan.
           @elseif ($pretestAttempt)
-            Pretest sudah selesai. Posttest belum tersedia saat ini.
+            Pretest sudah selesai. Tonton video edukasi terlebih dahulu, atau posttest belum tersedia saat ini.
           @else
-            Pretest dan posttest untuk sekolah Anda saat ini belum dibuka oleh admin atau guru.
+            Pilih sesi test aktif terlebih dahulu, atau pretest dan posttest untuk sekolah Anda saat ini belum dibuka oleh admin/guru.
           @endif
         </p>
       @endif

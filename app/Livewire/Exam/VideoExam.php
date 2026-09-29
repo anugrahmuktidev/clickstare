@@ -16,7 +16,9 @@ class VideoExam extends Component
 
     public function mount()
     {
-        $p = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
+        $p = ExamParticipation::where('user_id', Auth::id())
+            ->where('exam_session_id', session('active_exam_session_id'))
+            ->firstOrFail();
 
         if ($p->current_step !== 'video') {
             $this->redirectRoute("exam.{$p->current_step}", navigate: true);
@@ -46,7 +48,9 @@ class VideoExam extends Component
             return;
         }
 
-        $p = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
+        $p = ExamParticipation::where('user_id', Auth::id())
+            ->where('exam_session_id', session('active_exam_session_id'))
+            ->firstOrFail();
 
         $p->update([
             'video_watched_at' => now(),

@@ -7,12 +7,8 @@ use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Tables\Filters\Filter;
 use Illuminate\Support\Facades\Auth;
-use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Collection;
 
 class ParticipantValidationTable
@@ -28,6 +24,11 @@ class ParticipantValidationTable
 
                 TextColumn::make('user.sekolah.nama')
                     ->label('Asal Sekolah')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('user.schoolClass.nama')
+                    ->label('Kelas')
                     ->searchable()
                     ->sortable(),
 
@@ -53,31 +54,7 @@ class ParticipantValidationTable
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Diperbarui'),
             ])
-            ->filters([
-                SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'valid' => 'Disetujui',
-                        'invalid' => 'Ditolak',
-                    ]),
-                Filter::make('filter_user_role')
-                    ->label('Role')
-                    ->schema([
-                        Select::make('role')
-                            ->label('Pilih Role')
-                            ->options([
-                                'siswa' => 'Siswa',
-                                'guru' => 'Guru',
-                            ]),
-                    ])
-                    ->query(function ($query, array $data) {
-                        if (! $data['role']) {
-                            return $query;
-                        }
-
-                        return $query->whereHas('user', fn($q) => $q->where('role', $data['role']));
-                    }),
-            ])
+            ->filters([])
             ->recordActions([
                 Action::make('approve')
                     ->label('ACC')
@@ -163,9 +140,11 @@ class ParticipantValidationTable
             ])
             ->modifyQueryUsing(function ($query) {
                 return $query
-                    ->with(['user.sekolah', 'validator'])
+                    ->with(['user.sekolah', 'user.schoolClass', 'validator'])
                     ->orderByRaw("FIELD(status, 'pending', 'invalid', 'valid')")
                     ->latest('updated_at');
-            });
+            })
+            ->emptyStateHeading('Belum ada peserta untuk ditampilkan')
+            ->emptyStateDescription('Pilih sekolah dan kelas terlebih dahulu. Jika sudah dipilih, berarti kelas tersebut belum memiliki peserta validasi.');
     }
 }

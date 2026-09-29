@@ -7,10 +7,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("
-            ALTER TABLE knowledge_answers
-            MODIFY COLUMN value ENUM('STS', 'TS', 'S', 'SS', 'BENAR', 'SALAH') NOT NULL
-        ");
+        if ($this->isMysql()) {
+            DB::statement("
+                ALTER TABLE knowledge_answers
+                MODIFY COLUMN value ENUM('STS', 'TS', 'S', 'SS', 'BENAR', 'SALAH') NOT NULL
+            ");
+        }
 
         DB::statement("
             UPDATE knowledge_answers
@@ -21,18 +23,22 @@ return new class extends Migration
             END
         ");
 
-        DB::statement("
-            ALTER TABLE knowledge_answers
-            MODIFY COLUMN value ENUM('BENAR', 'SALAH') NOT NULL
-        ");
+        if ($this->isMysql()) {
+            DB::statement("
+                ALTER TABLE knowledge_answers
+                MODIFY COLUMN value ENUM('BENAR', 'SALAH') NOT NULL
+            ");
+        }
     }
 
     public function down(): void
     {
-        DB::statement("
-            ALTER TABLE knowledge_answers
-            MODIFY COLUMN value ENUM('STS', 'TS', 'S', 'SS', 'BENAR', 'SALAH') NOT NULL
-        ");
+        if ($this->isMysql()) {
+            DB::statement("
+                ALTER TABLE knowledge_answers
+                MODIFY COLUMN value ENUM('STS', 'TS', 'S', 'SS', 'BENAR', 'SALAH') NOT NULL
+            ");
+        }
 
         DB::statement("
             UPDATE knowledge_answers
@@ -43,9 +49,16 @@ return new class extends Migration
             END
         ");
 
-        DB::statement("
-            ALTER TABLE knowledge_answers
-            MODIFY COLUMN value ENUM('STS', 'TS', 'S', 'SS') NOT NULL
-        ");
+        if ($this->isMysql()) {
+            DB::statement("
+                ALTER TABLE knowledge_answers
+                MODIFY COLUMN value ENUM('STS', 'TS', 'S', 'SS') NOT NULL
+            ");
+        }
+    }
+
+    protected function isMysql(): bool
+    {
+        return DB::connection()->getDriverName() === 'mysql';
     }
 };

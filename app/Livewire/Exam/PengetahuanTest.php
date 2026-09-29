@@ -40,7 +40,10 @@ class PengetahuanTest extends Component
         $this->phase = $routeName === 'exam.pengetahuan_test_post' ? 'post' : 'pre';
 
         $p = ExamParticipation::firstOrCreate(
-            ['user_id' => Auth::id()],
+            [
+                'user_id' => Auth::id(),
+                'exam_session_id' => session('active_exam_session_id'),
+            ],
             ['current_step' => 'pretest']
         );
 
@@ -64,11 +67,13 @@ class PengetahuanTest extends Component
         }
 
         $userId = Auth::id();
+        $examSessionId = (int) session('active_exam_session_id');
         $questionIds = $this->questions->pluck('id');
 
         if ($questionIds->isNotEmpty()) {
             $existing = KnowledgeAnswer::query()
                 ->where('user_id', $userId)
+                ->where('exam_session_id', $examSessionId)
                 ->where('stage', $this->phase)
                 ->whereIn('knowledge_question_id', $questionIds)
                 ->get()
@@ -92,6 +97,7 @@ class PengetahuanTest extends Component
         $attemptId = session()->pull($attemptKey);
         $this->testResult = $this->loadTestResult(
             $this->phase === 'post' ? 'post' : 'pre',
+            $examSessionId,
             $attemptId ? (int) $attemptId : null
         );
         $this->timedOut = (bool) session()->pull($timedOutKey, false);
@@ -126,6 +132,7 @@ class PengetahuanTest extends Component
         }
 
         $userId = Auth::id();
+        $examSessionId = (int) session('active_exam_session_id');
         $questionIds = $this->questions->pluck('id')->all();
         $now = now();
         $totalSoal = $this->questions->count();
@@ -143,6 +150,7 @@ class PengetahuanTest extends Component
             $rows[] = [
                 'knowledge_question_id' => $question->id,
                 'user_id'               => $userId,
+                'exam_session_id'       => $examSessionId,
                 'stage'                 => $this->phase,
                 'value'                 => $selected,
                 'created_at'            => $now,
@@ -153,9 +161,10 @@ class PengetahuanTest extends Component
         $score = (int) round(($totalBenar / max(1, $totalSoal)) * 100);
         $attemptType = $this->phase === 'post' ? 'post' : 'pre';
 
-        DB::transaction(function () use ($rows, $userId, $questionIds, $attemptType, $totalSoal, $totalBenar, $score) {
+        DB::transaction(function () use ($rows, $userId, $examSessionId, $questionIds, $attemptType, $totalSoal, $totalBenar, $score) {
             KnowledgeAnswer::query()
                 ->where('user_id', $userId)
+                ->where('exam_session_id', $examSessionId)
                 ->where('stage', $this->phase)
                 ->whereIn('knowledge_question_id', $questionIds)
                 ->delete();
@@ -165,6 +174,7 @@ class PengetahuanTest extends Component
             TestAttempt::query()->updateOrCreate(
                 [
                     'user_id' => $userId,
+                    'exam_session_id' => $examSessionId,
                     'tipe' => $attemptType,
                 ],
                 [
@@ -190,7 +200,9 @@ class PengetahuanTest extends Component
             return;
         }
 
-        $p = ExamParticipation::where('user_id', Auth::id())->firstOrFail();
+        $p = ExamParticipation::where('user_id', Auth::id())
+            ->where('exam_session_id', session('active_exam_session_id'))
+            ->firstOrFail();
 
         if ($this->phase === 'post') {
             $p->update([
@@ -213,11 +225,12 @@ class PengetahuanTest extends Component
         $this->redirectRoute('exam.sikap', navigate: true);
     }
 
-    protected function loadTestResult(string $tipe, ?int $attemptId = null): ?array
+    protected function loadTestResult(string $tipe, ?int $examSessionId = null, ?int $attemptId = null): ?array
     {
         $query = TestAttempt::query()
             ->where('user_id', Auth::id())
-            ->where('tipe', $tipe);
+            ->where('tipe', $tipe)
+            ->when($examSessionId, fn ($query) => $query->where('exam_session_id', $examSessionId));
 
         if ($attemptId) {
             $query->where('id', $attemptId);
