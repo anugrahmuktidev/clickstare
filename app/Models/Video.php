@@ -59,6 +59,10 @@ class Video extends Model
                 return;
             }
 
+            if (in_array(strtolower(pathinfo($this->path, PATHINFO_EXTENSION)), ['mov', 'qt'], true)) {
+                return;
+            }
+
             // Tentukan nama & lokasi thumbnail
             $filename   = pathinfo($this->path, PATHINFO_FILENAME) . '.jpg';
             $thumbRel   = 'videos/thumbs/' . $filename;
@@ -72,7 +76,7 @@ class Video extends Model
 
             // Perintah ffmpeg: ambil frame di 1 detik pertama (ubah -ss sesuai perlu)
             $cmd = sprintf(
-                'ffmpeg -hide_banner -loglevel error -ss 00:00:01 -i %s -frames:v 1 -q:v 2 %s -y',
+                'timeout 20 ffmpeg -hide_banner -loglevel error -ss 00:00:01 -i %s -frames:v 1 -q:v 2 %s -y',
                 escapeshellarg($videoAbs),
                 escapeshellarg($thumbAbs)
             );
