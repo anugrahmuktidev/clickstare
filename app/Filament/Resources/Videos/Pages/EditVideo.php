@@ -16,4 +16,15 @@ class EditVideo extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (! empty($data['existing_video_path'])) {
+            $data['path'] = $data['existing_video_path'];
+        }
+
+        unset($data['existing_video_path']);
+
+        return $data;
+    }
 }

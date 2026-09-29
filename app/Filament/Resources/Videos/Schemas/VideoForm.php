@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Videos\Schemas;
 
+use Illuminate\Support\Facades\Storage;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
@@ -27,6 +29,18 @@ class VideoForm
                 ->helperText('Video ini akan diarahkan otomatis setelah siswa menyelesaikan pretest. Posttest baru terbuka setelah video selesai ditonton.')
                 ->default(false)
                 ->inline(false),
+
+            Select::make('existing_video_path')
+                ->label('Pilih file video yang sudah diupload')
+                ->helperText('Upload file lewat File Manager/FTP ke storage/app/public/videos, lalu pilih file di sini. Gunakan ini jika upload dari form gagal di cPanel.')
+                ->options(fn () => collect(Storage::disk('public')->files('videos'))
+                    ->filter(fn (string $path): bool => in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['mp4', 'webm', 'ogg', 'ogv', 'mov', 'qt'], true))
+                    ->sort()
+                    ->mapWithKeys(fn (string $path): array => [$path => $path])
+                    ->all())
+                ->searchable()
+                ->preload()
+                ->placeholder('Tidak memilih file existing'),
 
             FileUpload::make('path')
                 ->label('File Video')
