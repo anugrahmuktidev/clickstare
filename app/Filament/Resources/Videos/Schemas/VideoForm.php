@@ -42,12 +42,18 @@ class VideoForm
                 ->preload()
                 ->placeholder('Tidak memilih file existing'),
 
+            TextInput::make('manual_video_path')
+                ->label('Path / URL video manual')
+                ->helperText('Alternatif untuk cPanel: upload file ke public/storage/videos, lalu isi contoh: videos/gabungan.mov. Field ini tidak memakai proses upload Livewire.')
+                ->placeholder('videos/gabungan.mov')
+                ->maxLength(500),
+
             FileUpload::make('path')
                 ->label('File Video')
                 ->disk('public')                 // storage/app/public
                 ->directory('videos')            // isi 'path' jadi 'videos/xxx.mp4'
                 ->visibility('public')
-                ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-quicktime'])
+                ->acceptedFileTypes(['video/*', 'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-quicktime', 'application/octet-stream'])
                 ->maxSize(512000)                // 500 MB (satuan KB!)
                 ->preserveFilenames()
                 ->openable()

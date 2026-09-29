@@ -101,6 +101,10 @@ class Video extends Model
 
     public function getVideoUrlAttribute(): ?string
     {
+        if (str_starts_with((string) $this->path, 'http://') || str_starts_with((string) $this->path, 'https://') || str_starts_with((string) $this->path, '/')) {
+            return $this->path;
+        }
+
         return $this->path ? Storage::url($this->path) : null;
     }
 
@@ -112,5 +116,28 @@ class Video extends Model
             'ogg', 'ogv' => 'video/ogg',
             default => 'video/mp4',
         };
+    }
+
+    public static function normalizePathInput(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $path = trim($path);
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        $path = ltrim($path, '/');
+
+        foreach (['public/storage/videos/', 'storage/videos/', 'videos/'] as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                return 'videos/' . substr($path, strlen($prefix));
+            }
+        }
+
+        return $path;
     }
 }
