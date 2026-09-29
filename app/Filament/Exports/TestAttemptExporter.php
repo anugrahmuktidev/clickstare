@@ -258,6 +258,7 @@ class TestAttemptExporter extends Exporter
             ->with([
                 'sekolah:id,nama',
                 'schoolClass:id,nama',
+                'attempts:id,user_id,exam_session_id,tipe,total_soal,total_benar,score,updated_at',
                 'examParticipations:id,user_id,exam_session_id,pocket_money_range,uses_electric_smoke,uses_conventional_smoke,uses_both_smoke_types,updated_at',
                 'examParticipations.examSession:id,nama',
                 'attitudeAnswers:id,attitude_question_id,user_id,exam_session_id,stage,value',
@@ -313,6 +314,11 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveScore(User $record, string $stage): string
     {
+        $attempt = static::currentAttempt($record, $stage);
+        if ($attempt) {
+            return (string) (int) $attempt->score;
+        }
+
         $summary = KnowledgeTestSummary::summarizeForUser($record, $stage, static::currentExamSessionId($record));
         if (! $summary) {
             return '';
@@ -323,6 +329,11 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveTotalBenar(User $record, string $stage): string
     {
+        $attempt = static::currentAttempt($record, $stage);
+        if ($attempt) {
+            return (string) (int) $attempt->total_benar;
+        }
+
         $summary = KnowledgeTestSummary::summarizeForUser($record, $stage, static::currentExamSessionId($record));
         if (! $summary) {
             return '';
@@ -333,6 +344,11 @@ class TestAttemptExporter extends Exporter
 
     protected static function resolveTotalSoal(User $record, string $stage): string
     {
+        $attempt = static::currentAttempt($record, $stage);
+        if ($attempt) {
+            return (string) (int) $attempt->total_soal;
+        }
+
         $summary = KnowledgeTestSummary::summarizeForUser($record, $stage, static::currentExamSessionId($record));
         if (! $summary) {
             return '';
@@ -391,6 +407,21 @@ class TestAttemptExporter extends Exporter
 
         return $record->examParticipations
             ->sortByDesc(fn($participation) => $participation->updated_at?->timestamp ?? 0)
+            ->first();
+    }
+
+    protected static function currentAttempt(User $record, string $stage)
+    {
+        $attempts = $record->relationLoaded('attempts')
+            ? $record->attempts
+            : $record->attempts()->get();
+
+        $examSessionId = static::currentExamSessionId($record);
+
+        return $attempts
+            ->where('tipe', $stage)
+            ->when($examSessionId, fn ($attempts) => $attempts->where('exam_session_id', $examSessionId))
+            ->sortByDesc(fn ($attempt) => $attempt->updated_at?->timestamp ?? 0)
             ->first();
     }
 }

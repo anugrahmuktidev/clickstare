@@ -2,16 +2,19 @@
 
 namespace App\Filament\Resources\TestAttempts\Tables;
 
-use App\Filament\Resources\TestAttempts\TestAttemptResource;
 use App\Filament\Exports\TestAttemptExporter;
-use Filament\Tables\Filters\SelectFilter;
+use App\Filament\Resources\TestAttempts\TestAttemptResource;
+use App\Models\ExamSession;
+use App\Models\SchoolClass;
+use App\Models\Sekolah;
 use Filament\Actions\ExportAction;
 use Filament\Actions\Exports\Enums\ExportFormat;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Illuminate\Support\Arr;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TestAttemptsTable
 {
@@ -20,6 +23,50 @@ class TestAttemptsTable
         return $table
             // Filters: pilih jenis tes (Pre/Post)
             ->filters([
+                SelectFilter::make('sekolah_id')
+                    ->label('Sekolah')
+                    ->options(fn () => Sekolah::query()->orderBy('nama')->pluck('nama', 'id')->all())
+                    ->searchable()
+                    ->preload()
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (blank($data['value'] ?? null)) {
+                            return $query;
+                        }
+
+                        return $query->whereHas('user', fn (Builder $query) => $query->where('sekolah_id', $data['value']));
+                    }),
+                SelectFilter::make('school_class_id')
+                    ->label('Kelas')
+                    ->options(fn () => SchoolClass::query()
+                        ->with('sekolah:id,nama')
+                        ->orderBy('nama')
+                        ->get()
+                        ->mapWithKeys(fn (SchoolClass $class): array => [
+                            $class->id => trim(($class->sekolah?->nama ? $class->sekolah->nama . ' - ' : '') . $class->nama),
+                        ])
+                        ->all())
+                    ->searchable()
+                    ->preload()
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (blank($data['value'] ?? null)) {
+                            return $query;
+                        }
+
+                        return $query->whereHas('user', fn (Builder $query) => $query->where('school_class_id', $data['value']));
+                    }),
+                SelectFilter::make('exam_session_id')
+                    ->label('Sesi Test')
+                    ->options(fn () => ExamSession::query()
+                        ->with('sekolah:id,nama')
+                        ->orderBy('nama')
+                        ->get()
+                        ->mapWithKeys(fn (ExamSession $session): array => [
+                            $session->id => trim(($session->sekolah?->nama ? $session->sekolah->nama . ' - ' : '') . $session->nama),
+                        ])
+                        ->all())
+                    ->searchable()
+                    ->preload()
+                    ->attribute('exam_session_id'),
                 SelectFilter::make('tipe')
                     ->label('Jenis Tes')
                     ->options([
@@ -27,17 +74,25 @@ class TestAttemptsTable
                         'post' => 'Posttest',
                     ])
                     ->attribute('tipe'),
-
-                // Filter per Sekolah (mengambil dari relasi user.sekolah)
-                SelectFilter::make('sekolah')
-                    ->label('Sekolah')
-                    ->relationship('user.sekolah', 'nama')
-                    ->searchable()
-                    ->preload(),
             ])
             ->columns([
                 TextColumn::make('user.name')   // 👈 ambil dari relasi
                     ->label('Nama')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('user.sekolah.nama')
+                    ->label('Sekolah')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('user.schoolClass.nama')
+                    ->label('Kelas')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('examSession.nama')
+                    ->label('Sesi Test')
                     ->sortable()
                     ->searchable(),
 
@@ -144,6 +199,11 @@ class TestAttemptsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with([
+                'user.sekolah',
+                'user.schoolClass',
+                'examSession',
+            ]));
     }
 }
