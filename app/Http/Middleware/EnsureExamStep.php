@@ -44,11 +44,6 @@ class EnsureExamStep
             ['current_step' => 'pretest']
         );
 
-        if (in_array($requiredStep, $posttestSteps, true) && ! $p->video_watched_at) {
-            return redirect()->route('education.index')
-                ->with('error', 'Tonton video edukasi sampai selesai sebelum melanjutkan ke posttest.');
-        }
-
         $order = [
             'pretest'               => 1,
             'pengetahuan_test'      => 2,

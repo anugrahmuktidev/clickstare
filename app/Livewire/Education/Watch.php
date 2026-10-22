@@ -37,12 +37,12 @@ class Watch extends Component
                 ->latest('id')
                 ->first();
 
-            if ($requiredVideo && ! $participation->video_watched_at && $requiredVideo->isNot($video)) {
+            if ($requiredVideo && $participation->current_step === 'video' && $requiredVideo->isNot($video)) {
                 $this->redirectRoute('education.watch', $requiredVideo, navigate: true);
                 return;
             }
 
-            $this->videoCompleted = $participation->video_watched_at !== null;
+            $this->videoCompleted = $participation->current_step !== 'video';
         }
 
         $this->video = $video;
@@ -69,8 +69,8 @@ class Watch extends Component
             return;
         }
 
-        if (! $participation->video_watched_at) {
-            $participation->update(['video_watched_at' => now()]);
+        if ($participation->current_step === 'video') {
+            $participation->update(['current_step' => 'posttest']);
         }
 
         $this->videoCompleted = true;

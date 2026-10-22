@@ -53,7 +53,6 @@ class VideoExam extends Component
             ->firstOrFail();
 
         $p->update([
-            'video_watched_at' => now(),
             'current_step'     => 'posttest',
         ]);
 

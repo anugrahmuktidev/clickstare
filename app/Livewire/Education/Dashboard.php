@@ -200,7 +200,7 @@ class Dashboard extends Component
                     ->first();
             }
 
-            if ($selectedParticipation?->pretest_completed_at && ! $selectedParticipation?->video_watched_at) {
+            if ($selectedParticipation?->current_step === 'video') {
                 $requiredVideoIds = Video::query()
                     ->where('is_after_pretest', true)
                     ->pluck('id');
@@ -226,7 +226,7 @@ class Dashboard extends Component
             $showPosttestButton = (bool) ($user->sekolah?->is_posttest_enabled ?? false)
                 && $selectedExamSession !== null
                 && $pretestAttempt !== null
-                && $selectedParticipation?->video_watched_at !== null
+                && $selectedParticipation?->current_step === 'posttest'
                 && $posttestAttempt === null;
 
             $canWatchEducationVideo = $pretestAttempt !== null;

@@ -10,13 +10,11 @@ class ExamParticipation extends Model
         'user_id',
         'current_step',
         'pretest_completed_at',
-        'video_watched_at',
         'posttest_completed_at',
     ];
 
     protected $casts = [
         'pretest_completed_at'  => 'datetime',
-        'video_watched_at'      => 'datetime',
         'posttest_completed_at' => 'datetime',
     ];
 

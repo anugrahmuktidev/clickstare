@@ -22,7 +22,6 @@ class ExamParticipation extends Model
         'knowledge_test_completed_at',
         'knowledge_test_post_completed_at',
         'sikap_post_completed_at',
-        'video_watched_at',
         'posttest_completed_at',
     ];
 
@@ -35,7 +34,6 @@ class ExamParticipation extends Model
         'knowledge_test_completed_at' => 'datetime',
         'knowledge_test_post_completed_at' => 'datetime',
         'sikap_post_completed_at' => 'datetime',
-        'video_watched_at'      => 'datetime',
         'posttest_completed_at' => 'datetime',
     ];
 

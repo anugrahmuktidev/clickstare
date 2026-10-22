@@ -177,16 +177,16 @@ class Sikap extends Component
             return;
         }
 
-        $p->update([
-            'sikap_completed_at'   => now(),
-            'pretest_completed_at' => now(),
-            'current_step'         => 'posttest',
-        ]);
-
         $afterPretestVideo = Video::query()
             ->where('is_after_pretest', true)
             ->latest('id')
             ->first();
+
+        $p->update([
+            'sikap_completed_at'   => now(),
+            'pretest_completed_at' => now(),
+            'current_step'         => $afterPretestVideo ? 'video' : 'posttest',
+        ]);
 
         if ($afterPretestVideo) {
             session()->flash('success', 'Pretest selesai. Silakan tonton video edukasi sampai selesai sebelum posttest.');
