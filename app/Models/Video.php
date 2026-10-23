@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class Video extends Model
@@ -97,7 +98,7 @@ class Video extends Model
 
             // Perintah ffmpeg: ambil frame di 1 detik pertama (ubah -ss sesuai perlu)
             $cmd = sprintf(
-                'timeout 20 ffmpeg -hide_banner -loglevel error -ss 00:00:01 -i %s -frames:v 1 -q:v 2 %s -y',
+                'ffmpeg -hide_banner -loglevel error -ss 00:00:01 -i %s -frames:v 1 -q:v 2 -y %s 2>&1',
                 escapeshellarg($videoAbs),
                 escapeshellarg($thumbAbs)
             );
@@ -107,10 +108,20 @@ class Video extends Model
             if ($exitCode === 0 && $disk->exists($thumbRel)) {
                 // update kolom thumbnail_path
                 $this->forceFill(['thumbnail_path' => $thumbRel])->saveQuietly();
+            } else {
+                Log::warning('Video thumbnail generation failed.', [
+                    'video_id' => $this->id,
+                    'path' => $this->path,
+                    'exit_code' => $exitCode,
+                    'output' => implode("\n", $out),
+                ]);
             }
         } catch (\Throwable $e) {
-            // diamkan agar tidak mengganggu flow simpan
-            // kalau mau debug: \Log::warning('Thumb fail: '.$e->getMessage());
+            Log::warning('Video thumbnail generation threw an exception.', [
+                'video_id' => $this->id,
+                'path' => $this->path,
+                'message' => $e->getMessage(),
+            ]);
         }
     }
 

@@ -38,10 +38,10 @@
       <h2 class="font-bold text-base sm:text-lg mb-3">Sesi Test</h2>
 
       @if ($activeExamSessions->isNotEmpty())
-        <form wire:submit.prevent="selectExamSession" class="flex flex-col sm:flex-row gap-3 sm:items-end">
+        <div class="flex flex-col gap-3">
           <label class="block flex-1">
             <span class="text-sm text-gray-700">Pilih sesi aktif</span>
-            <select wire:model="selected_exam_session_id" class="mt-1 w-full border rounded p-2">
+            <select wire:model.live="selected_exam_session_id" class="mt-1 w-full border rounded p-2">
               <option value="">Pilih Sesi</option>
               @foreach ($activeExamSessions as $session)
                 <option value="{{ $session->id }}">{{ $session->nama }}</option>
@@ -49,10 +49,7 @@
             </select>
             @error('selected_exam_session_id') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
           </label>
-          <button class="px-4 py-2 rounded bg-gray-900 hover:bg-black text-white text-sm font-semibold">
-            Gunakan Sesi
-          </button>
-        </form>
+        </div>
 
         @if ($selectedExamSession)
           <p class="text-xs text-emerald-700 mt-2">Sesi aktif saat ini: <strong>{{ $selectedExamSession->nama }}</strong></p>

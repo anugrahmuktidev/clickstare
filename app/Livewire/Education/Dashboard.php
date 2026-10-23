@@ -35,16 +35,25 @@ class Dashboard extends Component
 
     public function selectExamSession(): void
     {
+        $this->activateSelectedExamSession();
+    }
+
+    public function updatedSelectedExamSessionId(): void
+    {
+        $this->activateSelectedExamSession();
+    }
+
+    protected function activateSelectedExamSession(): void
+    {
         $user = Auth::user();
 
-        $data = $this->validate([
-            'selected_exam_session_id' => ['required', 'exists:exam_sessions,id'],
-        ], [], [
-            'selected_exam_session_id' => 'sesi test',
-        ]);
+        if (! $this->selected_exam_session_id) {
+            $this->addError('selected_exam_session_id', 'Pilih sesi test terlebih dahulu.');
+            return;
+        }
 
         $session = $user->sekolah?->activeExamSessions()
-            ->whereKey($data['selected_exam_session_id'])
+            ->whereKey($this->selected_exam_session_id)
             ->first();
 
         if (! $session) {
