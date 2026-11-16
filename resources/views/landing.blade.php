@@ -21,6 +21,7 @@
 
     $posts = ($posts ?? collect())->take(4);
     $journals = ($journals ?? collect())->take(6);
+    $modules = ($modules ?? collect())->take(4);
 
     $slides = collect($slides ?? [])
         ->map(function ($slide) {
@@ -84,14 +85,31 @@
   <nav class="bg-white/95 border-b backdrop-blur sticky top-[56px] sm:top-[64px] z-30">
     <div class="mx-auto max-w-6xl px-4 py-2 flex items-center gap-3 text-sm font-semibold text-gray-600">
       <a href="#artikel"
-        class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 hover:border-red-500 hover:text-red-600 transition">
-        <span class="h-2 w-2 rounded-full bg-red-500"></span>
+        class="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-red-700 hover:border-red-500 hover:bg-red-100 transition"
+        aria-label="Lihat {{ $posts->count() }} artikel">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3.75h7.5l4.5 4.5v12H6.75a2.25 2.25 0 0 1-2.25-2.25V6a2.25 2.25 0 0 1 2.25-2.25Zm7.5 0v4.5h4.5M8.25 12h6.75m-6.75 3.75h6.75" />
+        </svg>
         Artikel
+        <span class="rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold leading-none text-white">{{ $posts->count() }}</span>
       </a>
       <a href="#jurnal"
-        class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 hover:border-emerald-500 hover:text-emerald-600 transition">
-        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+        class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-100 transition"
+        aria-label="Lihat {{ $journals->count() }} jurnal">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 5.25A2.25 2.25 0 0 1 6.75 3H20v16.5H6.75A2.25 2.25 0 0 0 4.5 21.75v-16.5Zm0 0A2.25 2.25 0 0 0 2.25 3H2v16.5h4.75m3-12h6m-6 3.75h6" />
+        </svg>
         Jurnal
+        <span class="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-bold leading-none text-white">{{ $journals->count() }}</span>
+      </a>
+      <a href="#modul"
+        class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-blue-700 hover:border-blue-500 hover:bg-blue-100 transition"
+        aria-label="Lihat {{ $modules->count() }} modul pembelajaran">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 5.25A2.25 2.25 0 0 1 6.75 3H20v16.5H6.75A2.25 2.25 0 0 0 4.5 21.75v-16.5Zm0 0A2.25 2.25 0 0 0 2.25 3H2v16.5h4.75" />
+        </svg>
+        Modul
+        <span class="rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-bold leading-none text-white">{{ $modules->count() }}</span>
       </a>
     </div>
   </nav>
@@ -270,6 +288,42 @@
     </div>
   </section>
 
+  {{-- MODUL PEMBELAJARAN --}}
+  <section id="modul" class="bg-slate-50 border-t">
+    <div class="mx-auto max-w-6xl px-4 py-12">
+      <div class="flex items-center gap-3">
+        <span class="px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 bg-blue-100 rounded-full">Modul</span>
+        <h2 class="text-2xl font-bold text-gray-900">Modul Pembelajaran</h2>
+      </div>
+      <p class="mt-2 text-sm text-gray-600">Baca atau unduh modul pembelajaran dalam format PDF.</p>
+
+      <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        @forelse($modules as $module)
+          @php($moduleUrl = Storage::url($module->file_path))
+          <article class="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+            <div class="relative h-48 overflow-hidden bg-slate-100">
+              <iframe src="{{ $moduleUrl }}#zoom=page-width" class="absolute inset-0 h-full w-full border-0"
+                title="Pratinjau {{ $module->judul }}" loading="lazy"></iframe>
+              <span class="absolute left-3 top-3 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow">Modul PDF</span>
+            </div>
+            <div class="flex flex-1 flex-col p-5">
+              <p class="text-xs font-medium text-gray-500">Diperbarui {{ $module->updated_at?->diffForHumans() }}</p>
+              <h3 class="mt-2 min-h-14 text-lg font-semibold leading-7 text-gray-900">{{ $module->judul }}</h3>
+              <a href="{{ $moduleUrl }}" target="_blank" rel="noopener"
+                class="mt-auto pt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                Buka modul <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          </article>
+        @empty
+          <div class="sm:col-span-2 lg:col-span-4 rounded-2xl border bg-white p-8 text-center text-gray-500">
+            Belum ada modul pembelajaran tersedia.
+          </div>
+        @endforelse
+      </div>
+    </div>
+  </section>
+
   {{-- JURNAL TERKAIT --}}
   <section id="jurnal" class="mx-auto max-w-6xl px-4 py-12">
     <div class="flex items-center justify-between flex-wrap gap-4">
@@ -291,24 +345,21 @@
 
     <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       @forelse($journals ?? collect() as $journal)
-        <article class="flex flex-col rounded-2xl border bg-white shadow-sm overflow-hidden">
-          <div class="relative h-44 bg-slate-100">
-            <iframe src="{{ Storage::url($journal->file_path) }}#zoom=page-width" class="absolute inset-0 h-full w-full"
+        @php($journalUrl = Storage::url($journal->file_path))
+        <article class="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+          <div class="relative h-48 overflow-hidden bg-slate-100">
+            <iframe src="{{ $journalUrl }}#zoom=page-width" class="absolute inset-0 h-full w-full border-0"
               title="Preview {{ $journal->judul }}" loading="lazy"></iframe>
+            <span class="absolute left-3 top-3 rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow">Jurnal PDF</span>
           </div>
-          <div class="flex flex-1 flex-col p-5 space-y-3">
-            <h3 class="text-lg font-semibold text-gray-900">{{ $journal->judul }}</h3>
-            @if ($journal->deskripsi)
-              <p class="text-sm text-gray-600">{{ \Illuminate\Support\Str::limit($journal->deskripsi, 130) }}</p>
-            @endif
-            <div class="mt-auto flex items-center justify-between pt-2 text-xs text-gray-500">
-              <span>Diperbarui {{ $journal->updated_at?->diffForHumans() }}</span>
-              <a href="{{ Storage::url($journal->file_path) }}"
-                class="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1.5 text-white text-xs font-semibold hover:bg-emerald-700"
-                target="_blank" rel="noopener">
-                Unduh
-              </a>
-            </div>
+          <div class="flex flex-1 flex-col p-5">
+            <p class="text-xs font-medium text-gray-500">Diperbarui {{ $journal->updated_at?->diffForHumans() }}</p>
+            <h3 class="mt-2 min-h-14 text-lg font-semibold leading-7 text-gray-900">{{ $journal->judul }}</h3>
+            <a href="{{ $journalUrl }}"
+              class="mt-auto pt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+              target="_blank" rel="noopener">
+              Buka jurnal <span aria-hidden="true">→</span>
+            </a>
           </div>
         </article>
       @empty

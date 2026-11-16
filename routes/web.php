@@ -19,6 +19,7 @@ use App\Livewire\Posts\Show as PostShow;
 use App\Models\Journal;
 use App\Models\Post;
 use App\Models\HeroSlide;
+use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 // use App\Livewire\Admin\Dashboard as AdminDashboard;
@@ -36,6 +37,11 @@ Route::get('/', function () {
         ->take(6)
         ->get();
 
+    $modules = Module::query()
+        ->latest('updated_at')
+        ->take(4)
+        ->get();
+
     $slides = HeroSlide::query()
         ->where('is_active', true)
         ->orderBy('sort_order')
@@ -45,6 +51,7 @@ Route::get('/', function () {
     return view('landing', [
         'posts' => $posts,
         'journals' => $journals,
+        'modules' => $modules,
         'slides' => $slides,
     ]);
 })->name('landing');
